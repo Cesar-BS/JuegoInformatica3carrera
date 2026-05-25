@@ -2,6 +2,7 @@
 #include <SFML/Graphics.hpp>
 #include <cmath>
 #include <vector>
+#include <map>
 
 // La ventana se pasa desde el coordinador
 // Para dibujar usamos una referencia externa
@@ -116,18 +117,40 @@ void Tablero::dibuja() const {
             if (matriz[i][j].pieza) {
                 Pieza* p = matriz[i][j].pieza;
 
-                sf::CircleShape circ(TAM_CASILLA * 0.33f);
-                circ.setOrigin(TAM_CASILLA * 0.33f, TAM_CASILLA * 0.33f);
-                circ.setPosition(
-                    OFFSET_X + j * TAM_CASILLA + TAM_CASILLA / 2.f,
-                    OFFSET_Y + i * TAM_CASILLA + TAM_CASILLA / 2.f
-                );
-                circ.setFillColor(p->getEquipo() == Equipo::Azul
-                    ? sf::Color(70, 130, 220)
-                    : sf::Color(220, 60, 60));
-                circ.setOutlineColor(sf::Color::White);
-                circ.setOutlineThickness(2.f);
-                window.draw(circ);
+                static std::map<std::string, sf::Texture> texturas;
+                static bool texCargadas = false;
+                if (!texCargadas) {
+                    texturas["Caballero"].loadFromFile("assets/caballero.png");
+                    texturas["Caballero_oscuro"].loadFromFile("assets/principe oscuro.png");
+                    texturas["Golem"].loadFromFile("assets/golem.png");
+                    texturas["PEKKA"].loadFromFile("assets/pekka.png");
+                    texturas["Dragon"].loadFromFile("assets/dragon.png");
+                    texturas["Dragon_infernal"].loadFromFile("assets/dragon infernal.png");
+                    texturas["Arqueras"].loadFromFile("assets/arquera.png");
+                    texturas["Reina_arquera"].loadFromFile("assets/reina arquera.png");
+                    texturas["Valkiria"].loadFromFile("assets/valkiria.png");
+                    texturas["Bandida"].loadFromFile("assets/bandida.png");
+                    texturas["Curandera"].loadFromFile("assets/curandera.png");
+                    texturas["Murcielago"].loadFromFile("assets/fenix.png");
+                    texturas["Esbirro"].loadFromFile("assets/esbirro.png");
+                    texturas["Dragon_electrico"].loadFromFile("assets/dragon electrico.png");
+                    texturas["Mago"].loadFromFile("assets/mago.png");
+                    texturas["Bruja"].loadFromFile("assets/bruja.png");
+                    texCargadas = true;
+                }
+
+                std::string nombre = p->getNombre();
+                if (texturas.count(nombre) > 0) {
+                    sf::Sprite spr;
+                    spr.setTexture(texturas[nombre]);
+                    float escala = (TAM_CASILLA - 4.f) / texturas[nombre].getSize().x;
+                    spr.setScale(escala, escala);
+                    spr.setPosition(
+                        OFFSET_X + j * TAM_CASILLA + 2.f,
+                        OFFSET_Y + i * TAM_CASILLA + 2.f
+                    );
+                    window.draw(spr);
+                }
 
                 // Barra de vida
                 float ratio = static_cast<float>(p->getVida()) / p->getVidaMax();
