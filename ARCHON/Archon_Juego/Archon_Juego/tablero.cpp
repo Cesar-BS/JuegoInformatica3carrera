@@ -45,27 +45,52 @@ void Tablero::inicializa() {
     for (auto& p : std::vector<std::pair<int, int>>{ {4,4},{0,4},{8,4},{4,0},{4,8} })
         matriz[p.first][p.second].esPuntoPoder = true;
 
-    // --- Bando Azul (columna 0) ---
-    matriz[0][0].pieza = new Caballero(Equipo::Azul);
-    matriz[1][0].pieza = new Arqueras(Equipo::Azul);
+    // --- Bando Azul ---
+    // Columna 0 (piezas especiales)
+    matriz[0][0].pieza = new Valkiria(Equipo::Azul);
+    matriz[1][0].pieza = new Golem(Equipo::Azul);
     matriz[2][0].pieza = new Dragon(Equipo::Azul);
-    matriz[3][0].pieza = new Golem(Equipo::Azul);
+    matriz[3][0].pieza = new Curandera(Equipo::Azul);
     matriz[4][0].pieza = new Mago(Equipo::Azul);
-    matriz[5][0].pieza = new Golem(Equipo::Azul);
-    matriz[6][0].pieza = new Valkiria(Equipo::Azul);
-    matriz[7][0].pieza = new Arqueras(Equipo::Azul);
-    matriz[8][0].pieza = new Caballero(Equipo::Azul);
+    matriz[5][0].pieza = new Murcielago(Equipo::Azul);
+    matriz[6][0].pieza = new Dragon(Equipo::Azul);
+    matriz[7][0].pieza = new Golem(Equipo::Azul);
+    matriz[8][0].pieza = new Valkiria(Equipo::Azul);
 
-    // --- Bando Rojo (columna 8) ---
-    matriz[0][8].pieza = new Caballero_oscuro(Equipo::Rojo);
-    matriz[1][8].pieza = new Reina_arquera(Equipo::Rojo);
+    // Columna 1 (caballeros)
+    matriz[0][1].pieza = new Arqueras(Equipo::Azul);
+    matriz[1][1].pieza = new Caballero(Equipo::Azul);
+    matriz[2][1].pieza = new Caballero(Equipo::Azul);
+    matriz[3][1].pieza = new Caballero(Equipo::Azul);
+    matriz[4][1].pieza = new Caballero(Equipo::Azul);
+    matriz[5][1].pieza = new Caballero(Equipo::Azul);
+    matriz[6][1].pieza = new Caballero(Equipo::Azul);
+    matriz[7][1].pieza = new Caballero(Equipo::Azul);
+    matriz[8][1].pieza = new Arqueras(Equipo::Azul);
+
+    // --- Bando Rojo ---
+    // Columna 8 (piezas especiales)
+    matriz[0][8].pieza = new Bandida(Equipo::Rojo);
+    matriz[1][8].pieza = new PEKKA(Equipo::Rojo);
     matriz[2][8].pieza = new Dragon_infernal(Equipo::Rojo);
-    matriz[3][8].pieza = new PEKKA(Equipo::Rojo);
+    matriz[3][8].pieza = new Esbirro(Equipo::Rojo);
     matriz[4][8].pieza = new Bruja(Equipo::Rojo);
-    matriz[5][8].pieza = new PEKKA(Equipo::Rojo);
-    matriz[6][8].pieza = new Bandida(Equipo::Rojo);
-    matriz[7][8].pieza = new Reina_arquera(Equipo::Rojo);
-    matriz[8][8].pieza = new Caballero_oscuro(Equipo::Rojo);
+    matriz[5][8].pieza = new Dragon_electrico(Equipo::Rojo);
+    matriz[6][8].pieza = new Dragon_infernal(Equipo::Rojo);
+    matriz[7][8].pieza = new PEKKA(Equipo::Rojo);
+    matriz[8][8].pieza = new Bandida(Equipo::Rojo);
+
+    // Columna 7 (caballeros oscuros)
+    matriz[0][7].pieza = new Reina_arquera(Equipo::Rojo);
+    matriz[1][7].pieza = new Caballero_oscuro(Equipo::Rojo);
+    matriz[2][7].pieza = new Caballero_oscuro(Equipo::Rojo);
+    matriz[3][7].pieza = new Caballero_oscuro(Equipo::Rojo);
+    matriz[4][7].pieza = new Caballero_oscuro(Equipo::Rojo);
+    matriz[5][7].pieza = new Caballero_oscuro(Equipo::Rojo);
+    matriz[6][7].pieza = new Caballero_oscuro(Equipo::Rojo);
+    matriz[7][7].pieza = new Caballero_oscuro(Equipo::Rojo);
+    matriz[8][7].pieza = new Reina_arquera(Equipo::Rojo);
+}
 }
 
 // =========================================================
