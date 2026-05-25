@@ -260,7 +260,55 @@ void Tablero::finalizarTurno() {
     contadorTurnos++;
 }
 
+// Cuenta cuántas piezas vivas tiene un equipo
+int Tablero::contarPiezas(Equipo equipo) const {
+    int count = 0;
+    for (int i = 0; i < TAM; ++i)
+        for (int j = 0; j < TAM; ++j)
+            if (matriz[i][j].pieza && matriz[i][j].pieza->getEquipo() == equipo)
+                count++;
+    return count;
+}
+
+// Cuenta cuántos puntos de poder ocupa un equipo
+int Tablero::contarPuntosPoder(Equipo equipo) const {
+    int count = 0;
+    for (int i = 0; i < TAM; ++i)
+        for (int j = 0; j < TAM; ++j)
+            if (matriz[i][j].esPuntoPoder &&
+                matriz[i][j].pieza &&
+                matriz[i][j].pieza->getEquipo() == equipo)
+                count++;
+    return count;
+}
+
+// Condición 3: el rival solo tiene una pieza y está encarcelada
+bool Tablero::soloQuedaEncarcelada(Equipo equipo) const {
+    int total = 0;
+    int encarceladas = 0;
+    for (int i = 0; i < TAM; ++i)
+        for (int j = 0; j < TAM; ++j)
+            if (matriz[i][j].pieza && matriz[i][j].pieza->getEquipo() == equipo) {
+                total++;
+                if (matriz[i][j].pieza->estaEncarcelada())
+                    encarceladas++;
+            }
+    return (total == 1 && encarceladas == 1);
+}
+
 ResultadoVictoria Tablero::comprobarVictoria() const {
+    // Condición 1: controlar los 5 puntos de poder
+    if (contarPuntosPoder(Equipo::Azul) == 5)  return ResultadoVictoria::GanaAzul;
+    if (contarPuntosPoder(Equipo::Rojo) == 5)  return ResultadoVictoria::GanaRojo;
+
+    // Condición 2: el rival no tiene piezas
+    if (contarPiezas(Equipo::Rojo) == 0)       return ResultadoVictoria::GanaAzul;
+    if (contarPiezas(Equipo::Azul) == 0)       return ResultadoVictoria::GanaRojo;
+
+    // Condición 3: al rival solo le queda una pieza encarcelada
+    if (soloQuedaEncarcelada(Equipo::Rojo))    return ResultadoVictoria::GanaAzul;
+    if (soloQuedaEncarcelada(Equipo::Azul))    return ResultadoVictoria::GanaRojo;
+
     return ResultadoVictoria::Ninguno;
 }
 

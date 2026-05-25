@@ -45,4 +45,8 @@ private:
 
     int atacanteX = -1, atacanteY = -1;
     int defensorX = -1, defensorY = -1;
+
+    int contarPiezas(Equipo equipo) const;
+    int contarPuntosPoder(Equipo equipo) const;
+    bool soloQuedaEncarcelada(Equipo equipo) const;
 };

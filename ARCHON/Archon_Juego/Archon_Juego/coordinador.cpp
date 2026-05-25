@@ -81,20 +81,33 @@ void Coordinador::iniciarCombate() {
 }
 
 void Coordinador::actualizar(sf::RenderWindow& window) {
-    if (estado == EstadoJuego::MENU) { menu.actualizar(window); return; }
-    if (estado == EstadoJuego::TABLERO) {
-        tablero.mueve(0.016);
-        if (tablero.comprobarVictoria() != ResultadoVictoria::Ninguno)
-            estado = EstadoJuego::FIN_PARTIDA;
+    if (estado == EstadoJuego::MENU) {
+        menu.actualizar(window);
         return;
     }
+
+    if (estado == EstadoJuego::TABLERO) {
+        tablero.mueve(0.016);
+
+        ResultadoVictoria res = tablero.comprobarVictoria();
+        if (res == ResultadoVictoria::GanaAzul) {
+            ganadorTexto = "GANA EL EQUIPO AZUL";
+            estado = EstadoJuego::FIN_PARTIDA;
+        }
+        else if (res == ResultadoVictoria::GanaRojo) {
+            ganadorTexto = "GANA EL EQUIPO ROJO";
+            estado = EstadoJuego::FIN_PARTIDA;
+        }
+        return;
+    }
+
     if (estado == EstadoJuego::ARENA_COMBATE) {
         float dt = relojCombate.restart().asSeconds();
         if (dt > 0.05f) dt = 0.05f;
         actualizarCombate(dt);
+        return;
     }
 }
-
 void Coordinador::actualizarCombate(float dt) {
     if (!piezaAzulCombate || !piezaRojaCombate) return;
 
@@ -153,6 +166,11 @@ void Coordinador::actualizarCombate(float dt) {
 
     if (vidaAzulCombate <= 0 || vidaRojaCombate <= 0) {
         Pieza* perdedor = (vidaAzulCombate <= 0) ? piezaAzulCombate : piezaRojaCombate;
+        if (vidaAzulCombate > 0 && piezaAzulCombate)
+            piezaAzulCombate->setVida(vidaAzulCombate);
+        if (vidaRojaCombate > 0 && piezaRojaCombate)
+            piezaRojaCombate->setVida(vidaRojaCombate);
+
         tablero.resolverCombate(perdedor);
         tablero.finalizarTurno();
         piezaAzulCombate = piezaRojaCombate = nullptr;
@@ -210,9 +228,10 @@ void Coordinador::dibujar(sf::RenderWindow& window) {
     if (estado == EstadoJuego::ARENA_COMBATE) { dibujarCombate(window); return; }
 
     if (estado == EstadoJuego::FIN_PARTIDA && fuenteCargada) {
-        sf::Text t("FIN DE PARTIDA", fuente, 60);
+        sf::Text t(ganadorTexto, fuente, 60);
         t.setFillColor(sf::Color::White);
-        t.setPosition(350.f, 300.f);
+        sf::FloatRect bounds = t.getLocalBounds();
+        t.setPosition((1280.f - bounds.width) / 2.f, 300.f);
         window.draw(t);
     }
 }

@@ -45,6 +45,7 @@ private:
 
     sf::Font fuente;
     bool     fuenteCargada = false;
+    std::string ganadorTexto = "";
 
     void procesarClickTablero(int px, int py);
     void iniciarCombate();
