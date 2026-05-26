@@ -277,25 +277,28 @@ void Coordinador::dibujarCombate(sf::RenderWindow& window) {
     // Barra de vida azul (izquierda)
     int mA = piezaAzulCombate ? piezaAzulCombate->getVidaMax() : 100;
     float rA = std::max(0.f, (float)vidaAzulCombate / mA);
-    sf::RectangleShape rellenoA({ 280.f * rA, 20.f });
-    rellenoA.setFillColor(sf::Color(70, 130, 220));
-    rellenoA.setPosition(60.f, 28.f);
+    // Marco
+    sprBarraAzul.setScale(400.f / texBarraAzul.getSize().x, 60.f / texBarraAzul.getSize().y);
+    sprBarraAzul.setPosition(10.f, 5.f);
+    // Relleno debajo del marco
+    sf::RectangleShape rellenoA({ 320.f * rA, 22.f });
+    rellenoA.setFillColor(sf::Color(70, 130, 255));
+    rellenoA.setPosition(75.f, 24.f);
     window.draw(rellenoA);
-    sprBarraAzul.setScale(400.f / texBarraAzul.getSize().x, 50.f / texBarraAzul.getSize().y);
-    sprBarraAzul.setPosition(20.f, 10.f);
     window.draw(sprBarraAzul);
 
     // Barra de vida roja (derecha)
     int mR = piezaRojaCombate ? piezaRojaCombate->getVidaMax() : 100;
     float rR = std::max(0.f, (float)vidaRojaCombate / mR);
-    sf::RectangleShape rellenoR({ 280.f * rR, 20.f });
-    rellenoR.setFillColor(sf::Color(220, 60, 60));
-    rellenoR.setPosition(860.f, 28.f);
+    // Marco (invertido para que el escudo quede a la derecha)
+    sprBarraRoja.setScale(-400.f / texBarraRoja.getSize().x, 60.f / texBarraRoja.getSize().y);
+    sprBarraRoja.setPosition(1270.f, 5.f);
+    // Relleno
+    sf::RectangleShape rellenoR({ 320.f * rR, 22.f });
+    rellenoR.setFillColor(sf::Color(255, 60, 60));
+    rellenoR.setPosition(880.f + 320.f * (1.f - rR), 24.f);
     window.draw(rellenoR);
-    sprBarraRoja.setScale(400.f / texBarraRoja.getSize().x, 50.f / texBarraRoja.getSize().y);
-    sprBarraRoja.setPosition(860.f, 10.f);
     window.draw(sprBarraRoja);
-
     if (fuenteCargada) {
         sf::Text tA(piezaAzulCombate ? piezaAzulCombate->getNombre() : "Azul", fuente, 16);
         tA.setFillColor(sf::Color(150, 200, 255)); tA.setPosition(20.f, 46.f); window.draw(tA);
