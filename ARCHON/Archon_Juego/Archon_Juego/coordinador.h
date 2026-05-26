@@ -4,6 +4,7 @@
 #include "Menu.h"
 #include "tablero.h"
 #include "Arena.h"
+#include <SFML/Audio.hpp>
 
 enum class EstadoJuego {
     MENU,
@@ -46,6 +47,13 @@ private:
     sf::Font fuente;
     bool     fuenteCargada = false;
     std::string ganadorTexto = "";
+
+    //añade los sonidos
+    sf::SoundBuffer bufferMuerte;
+    sf::Sound       sonidoMuerte;
+
+    sf::SoundBuffer bufferMenu;
+    sf::Sound       sonidoMenu;
 
     void procesarClickTablero(int px, int py);
     void iniciarCombate();

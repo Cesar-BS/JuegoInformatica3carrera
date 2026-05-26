@@ -1,6 +1,7 @@
 #include "Coordinador.h"
 #include <cmath>
 #include <algorithm>
+#include <SFML/Audio.hpp>
 
 static constexpr float TAM_CASILLA = 70.f;
 static constexpr float OFFSET_X = 100.f;
@@ -10,6 +11,11 @@ Coordinador::Coordinador()
     : estado(EstadoJuego::MENU), menu(1280, 720)
 {
     fuenteCargada = fuente.loadFromFile("assets/supercell-magic.ttf");
+    if (bufferMuerte.loadFromFile("assets/jija.ogg"))
+        sonidoMuerte.setBuffer(bufferMuerte);
+    if (bufferMenu.loadFromFile("assets/clash-royale-start-up-sound.ogg"))
+        sonidoMenu.setBuffer(bufferMenu);
+    sonidoMenu.play();
 }
 
 void Coordinador::inicializar() {
@@ -164,6 +170,8 @@ void Coordinador::actualizarCombate(float dt) {
         [](const Proyectil& p) { return !p.activo; }), proyectiles.end());
 
     if (vidaAzulCombate <= 0 || vidaRojaCombate <= 0) {
+        sonidoMuerte.play();
+
         Pieza* perdedor = (vidaAzulCombate <= 0) ? piezaAzulCombate : piezaRojaCombate;
         if (vidaAzulCombate > 0 && piezaAzulCombate)
             piezaAzulCombate->setVida(vidaAzulCombate);
