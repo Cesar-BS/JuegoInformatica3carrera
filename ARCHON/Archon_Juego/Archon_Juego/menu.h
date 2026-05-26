@@ -1,4 +1,3 @@
-
 #pragma once
 #include <SFML/Graphics.hpp>
 #include <vector>
@@ -7,35 +6,32 @@
 enum class EstadoMenu {
     MENU_PRINCIPAL,
     JUGANDO,
-    RANKING,
+    INSTRUCCIONES,
     SALIR
 };
 
 class Menu {
 private:
-    // Texturas para el efecto visual de "iluminar" botones
     sf::Texture texFondoNormal;
-    sf::Texture texFondoJugar;
-    sf::Texture texFondoRanking;
-    sf::Sprite sprFondo;
+    sf::Sprite  sprBackground;
+    sf::Font    font;
 
-    // Hitboxes: Áreas invisibles donde el usuario hace clic
-    sf::FloatRect rectJugar;
-    sf::FloatRect rectRanking;
-    sf::FloatRect rectSalir;
+    std::vector<sf::Text> menuOptions;
+
+    sf::Texture texInstrucciones;
+    sf::Sprite  sprInstrucciones;
+    bool        mostrandoInstrucciones = false;
+    bool        texInstruccionesCargada = false;
+
+    float anchoVentana, altoVentana;
+
+    void ajustarFondo(const sf::Texture& texture);
+    void configurarMenu();
 
 public:
     Menu(float width, float height);
-
-    // Carga las imágenes necesarias
     bool cargarRecursos();
-
-    // Cambia la textura del fondo si el ratón está encima de un botón
     void actualizar(sf::RenderWindow& window);
-
-    // Dibuja el menú
     void dibujar(sf::RenderWindow& window);
-
-    // Procesa los clics y devuelve el nuevo estado del juego
     EstadoMenu procesarEventos(sf::RenderWindow& window, sf::Event& event);
 };

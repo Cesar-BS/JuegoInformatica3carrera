@@ -9,7 +9,7 @@ static constexpr float OFFSET_Y = 50.f;
 Coordinador::Coordinador()
     : estado(EstadoJuego::MENU), menu(1280, 720)
 {
-    fuenteCargada = fuente.loadFromFile("assets/arial.ttf");
+    fuenteCargada = fuente.loadFromFile("assets/supercell-magic.ttf");
 }
 
 void Coordinador::inicializar() {
@@ -23,7 +23,6 @@ void Coordinador::gestionarEventos(sf::RenderWindow& window, sf::Event& event) {
         if (res == EstadoMenu::SALIR)   estado = EstadoJuego::SALIR;
         return;
     }
-
     if (estado == EstadoJuego::TABLERO) {
         if (event.type == sf::Event::MouseButtonPressed &&
             event.mouseButton.button == sf::Mouse::Left)
