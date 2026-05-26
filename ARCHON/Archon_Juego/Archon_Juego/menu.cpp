@@ -1,57 +1,128 @@
 #include "Menu.h"
 #include <iostream>
 
-Menu::Menu(float width, float height) {
-    // Definimos las zonas de clic (ajusta estos números a tu imagen)
-    // Formato: (X, Y, Ancho, Alto)
-    rectJugar = sf::FloatRect(400, 275, 480, 80);
-    rectRanking = sf::FloatRect(400, 360, 480, 80);
-    rectSalir = sf::FloatRect(400, 440, 480, 80);
+Menu::Menu(float width, float height)
+    : anchoVentana(width), altoVentana(height)
+{
+}
+
+void Menu::ajustarFondo(const sf::Texture& texture) {
+    sprBackground.setTexture(texture);
+    sprBackground.setScale(
+        anchoVentana / texture.getSize().x,
+        altoVentana / texture.getSize().y
+    );
+    sprBackground.setPosition(0.f, 0.f);
+}
+
+void Menu::configurarMenu() {
+    menuOptions.clear();
+    std::vector<std::string> names = { "JUGAR", "CONTROLES", "SALIR" };
+
+    float positionsX = 664.f;
+    float positionsY[] = { 353.f, 458.f, 570.f };
+
+    for (int i = 0; i < (int)names.size(); ++i) {
+        sf::Text text;
+        text.setFont(font);
+        text.setString(names[i]);
+        text.setCharacterSize(45);
+        text.setFillColor(sf::Color(255, 200, 0));
+        text.setOutlineColor(sf::Color::Black);
+        text.setOutlineThickness(4);
+
+        sf::FloatRect textRect = text.getLocalBounds();
+        text.setOrigin(
+            textRect.left + textRect.width / 2.f,
+            textRect.top + textRect.height / 2.f
+        );
+        text.setPosition(positionsX, positionsY[i]);
+
+        menuOptions.push_back(text);
+    }
 }
 
 bool Menu::cargarRecursos() {
-    if (!texFondoNormal.loadFromFile("assets/menu_normal.png") ||
-        !texFondoJugar.loadFromFile("assets/menu_jugar_on.png") ||
-        !texFondoRanking.loadFromFile("assets/menu_ranking_on.png")) {
+    if (!font.loadFromFile("assets/supercell-magic.ttf")) {
         return false;
     }
-    sprFondo.setTexture(texFondoNormal);
-    //Ajustar el tamaño
-    sf::Vector2u textureSize = texFondoNormal.getSize();
-    float scaleX = 1280.0f / textureSize.x;
-    float scaleY = 720.0f / textureSize.y;
+    if (!texFondoNormal.loadFromFile("assets/menu_normal.png")) {
+        return false;
+    }
 
-    sprFondo.setScale(scaleX, scaleY);
+    if (texInstrucciones.loadFromFile("assets/instrucciones.png")) {
+        sprInstrucciones.setTexture(texInstrucciones);
+        sprInstrucciones.setScale(
+            anchoVentana / texInstrucciones.getSize().x,
+            altoVentana / texInstrucciones.getSize().y
+        );
+        sprInstrucciones.setPosition(0.f, 0.f);
+        texInstruccionesCargada = true;
+    }
+
+    ajustarFondo(texFondoNormal);
+    configurarMenu();
     return true;
 }
 
 void Menu::actualizar(sf::RenderWindow& window) {
-    sf::Vector2i mousePos = sf::Mouse::getPosition(window);
-    sf::Vector2f mouseCoords = window.mapPixelToCoords(mousePos);
+    if (mostrandoInstrucciones) return;
 
-    // Efecto visual: Cambiar fondo según la posición del ratón
-    if (rectJugar.contains(mouseCoords)) {
-        sprFondo.setTexture(texFondoJugar);
-    }
-    else if (rectRanking.contains(mouseCoords)) {
-        sprFondo.setTexture(texFondoRanking);
-    }
-    else {
-        sprFondo.setTexture(texFondoNormal);
+    sf::Vector2f mouse = window.mapPixelToCoords(sf::Mouse::getPosition(window));
+
+    for (auto& text : menuOptions) {
+        if (text.getGlobalBounds().contains(mouse))
+            text.setFillColor(sf::Color(255, 230, 50));  // dorado brillante hover
+        else
+            text.setFillColor(sf::Color(255, 200, 0));   // dorado normal
     }
 }
 
 EstadoMenu Menu::procesarEventos(sf::RenderWindow& window, sf::Event& event) {
-    if (event.type == sf::Event::MouseButtonPressed && event.mouseButton.button == sf::Mouse::Left) {
-        sf::Vector2f mousePos(event.mouseButton.x, event.mouseButton.y);
-
-        if (rectJugar.contains(mousePos))   return EstadoMenu::JUGANDO;
-        if (rectRanking.contains(mousePos)) return EstadoMenu::RANKING;
-        if (rectSalir.contains(mousePos))   return EstadoMenu::SALIR;
+    if (event.type == sf::Event::KeyPressed &&
+        event.key.code == sf::Keyboard::Escape)
+    {
+        if (mostrandoInstrucciones) {
+            mostrandoInstrucciones = false;
+            return EstadoMenu::MENU_PRINCIPAL;
+        }
     }
+
+    if (event.type == sf::Event::MouseButtonPressed &&
+        event.mouseButton.button == sf::Mouse::Left)
+    {
+        if (mostrandoInstrucciones) {
+            mostrandoInstrucciones = false;
+            return EstadoMenu::MENU_PRINCIPAL;
+        }
+
+        sf::Vector2f mouse = window.mapPixelToCoords(
+            sf::Vector2i(event.mouseButton.x, event.mouseButton.y)
+        );
+
+        for (int i = 0; i < (int)menuOptions.size(); ++i) {
+            if (menuOptions[i].getGlobalBounds().contains(mouse)) {
+                if (i == 0) return EstadoMenu::JUGANDO;
+                if (i == 1) {
+                    mostrandoInstrucciones = true;
+                    return EstadoMenu::MENU_PRINCIPAL;
+                }
+                if (i == 2) return EstadoMenu::SALIR;
+            }
+        }
+    }
+
     return EstadoMenu::MENU_PRINCIPAL;
 }
 
 void Menu::dibujar(sf::RenderWindow& window) {
-    window.draw(sprFondo);
+    if (mostrandoInstrucciones) {
+        if (texInstruccionesCargada)
+            window.draw(sprInstrucciones);
+        return;
+    }
+
+    window.draw(sprBackground);
+    for (const auto& text : menuOptions)
+        window.draw(text);
 }

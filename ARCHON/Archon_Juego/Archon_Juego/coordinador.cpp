@@ -1,6 +1,7 @@
 #include "Coordinador.h"
 #include <cmath>
 #include <algorithm>
+#include <SFML/Audio.hpp>
 
 static constexpr float TAM_CASILLA = 70.f;
 static constexpr float OFFSET_X = 100.f;
@@ -9,7 +10,12 @@ static constexpr float OFFSET_Y = 50.f;
 Coordinador::Coordinador()
     : estado(EstadoJuego::MENU), menu(1280, 720)
 {
-    fuenteCargada = fuente.loadFromFile("assets/arial.ttf");
+    fuenteCargada = fuente.loadFromFile("assets/supercell-magic.ttf");
+    if (bufferMuerte.loadFromFile("assets/jija.ogg"))
+        sonidoMuerte.setBuffer(bufferMuerte);
+    if (bufferMenu.loadFromFile("assets/clash-royale-start-up-sound.ogg"))
+        sonidoMenu.setBuffer(bufferMenu);
+    sonidoMenu.play();
 }
 
 void Coordinador::inicializar() {
@@ -23,7 +29,6 @@ void Coordinador::gestionarEventos(sf::RenderWindow& window, sf::Event& event) {
         if (res == EstadoMenu::SALIR)   estado = EstadoJuego::SALIR;
         return;
     }
-
     if (estado == EstadoJuego::TABLERO) {
         if (event.type == sf::Event::MouseButtonPressed &&
             event.mouseButton.button == sf::Mouse::Left)
@@ -81,20 +86,33 @@ void Coordinador::iniciarCombate() {
 }
 
 void Coordinador::actualizar(sf::RenderWindow& window) {
-    if (estado == EstadoJuego::MENU) { menu.actualizar(window); return; }
-    if (estado == EstadoJuego::TABLERO) {
-        tablero.mueve(0.016);
-        if (tablero.comprobarVictoria() != ResultadoVictoria::Ninguno)
-            estado = EstadoJuego::FIN_PARTIDA;
+    if (estado == EstadoJuego::MENU) {
+        menu.actualizar(window);
         return;
     }
+
+    if (estado == EstadoJuego::TABLERO) {
+        tablero.mueve(0.016);
+
+        ResultadoVictoria res = tablero.comprobarVictoria();
+        if (res == ResultadoVictoria::GanaAzul) {
+            ganadorTexto = "GANA EL EQUIPO AZUL";
+            estado = EstadoJuego::FIN_PARTIDA;
+        }
+        else if (res == ResultadoVictoria::GanaRojo) {
+            ganadorTexto = "GANA EL EQUIPO ROJO";
+            estado = EstadoJuego::FIN_PARTIDA;
+        }
+        return;
+    }
+
     if (estado == EstadoJuego::ARENA_COMBATE) {
         float dt = relojCombate.restart().asSeconds();
         if (dt > 0.05f) dt = 0.05f;
         actualizarCombate(dt);
+        return;
     }
 }
-
 void Coordinador::actualizarCombate(float dt) {
     if (!piezaAzulCombate || !piezaRojaCombate) return;
 
@@ -152,7 +170,14 @@ void Coordinador::actualizarCombate(float dt) {
         [](const Proyectil& p) { return !p.activo; }), proyectiles.end());
 
     if (vidaAzulCombate <= 0 || vidaRojaCombate <= 0) {
+        sonidoMuerte.play();
+
         Pieza* perdedor = (vidaAzulCombate <= 0) ? piezaAzulCombate : piezaRojaCombate;
+        if (vidaAzulCombate > 0 && piezaAzulCombate)
+            piezaAzulCombate->setVida(vidaAzulCombate);
+        if (vidaRojaCombate > 0 && piezaRojaCombate)
+            piezaRojaCombate->setVida(vidaRojaCombate);
+
         tablero.resolverCombate(perdedor);
         tablero.finalizarTurno();
         piezaAzulCombate = piezaRojaCombate = nullptr;
@@ -210,15 +235,28 @@ void Coordinador::dibujar(sf::RenderWindow& window) {
     if (estado == EstadoJuego::ARENA_COMBATE) { dibujarCombate(window); return; }
 
     if (estado == EstadoJuego::FIN_PARTIDA && fuenteCargada) {
-        sf::Text t("FIN DE PARTIDA", fuente, 60);
+        sf::Text t(ganadorTexto, fuente, 60);
         t.setFillColor(sf::Color::White);
-        t.setPosition(350.f, 300.f);
+        sf::FloatRect bounds = t.getLocalBounds();
+        t.setPosition((1280.f - bounds.width) / 2.f, 300.f);
         window.draw(t);
     }
 }
 
 void Coordinador::dibujarCombate(sf::RenderWindow& window) {
-    arenaVisual.dibujar(window);
+    static sf::Texture texCombate;
+    static sf::Sprite sprCombate;
+    static bool combateCargado = false;
+    if (!combateCargado) {
+        texCombate.loadFromFile("assets/combate_bueno.png");
+        sprCombate.setTexture(texCombate);
+        sprCombate.setScale(
+            1280.f / texCombate.getSize().x,
+            720.f / texCombate.getSize().y
+        );
+        combateCargado = true;
+    }
+    window.draw(sprCombate);
 
     sf::CircleShape sA(24.f); sA.setOrigin(24.f, 24.f);
     sA.setFillColor(sf::Color(70, 130, 220)); sA.setOutlineColor(sf::Color::White); sA.setOutlineThickness(2.f);
@@ -230,16 +268,44 @@ void Coordinador::dibujarCombate(sf::RenderWindow& window) {
 
     for (auto& p : proyectiles) if (p.activo) window.draw(p.forma);
 
+    
+    // Cargar marcos de barras de vida
+    static sf::Texture texBarraAzul, texBarraRoja;
+    static sf::Sprite sprBarraAzul, sprBarraRoja;
+    static bool barrasCargadas = false;
+    if (!barrasCargadas) {
+        texBarraAzul.loadFromFile("assets/barra_azul.png");
+        texBarraRoja.loadFromFile("assets/barra_roja.png");
+        sprBarraAzul.setTexture(texBarraAzul);
+        sprBarraRoja.setTexture(texBarraRoja);
+        barrasCargadas = true;
+    }
+
+    // Barra de vida azul (izquierda)
     int mA = piezaAzulCombate ? piezaAzulCombate->getVidaMax() : 100;
-    int mR = piezaRojaCombate ? piezaRojaCombate->getVidaMax() : 100;
     float rA = std::max(0.f, (float)vidaAzulCombate / mA);
+    // Marco
+    sprBarraAzul.setScale(400.f / texBarraAzul.getSize().x, 60.f / texBarraAzul.getSize().y);
+    sprBarraAzul.setPosition(10.f, 5.f);
+    // Relleno debajo del marco
+    sf::RectangleShape rellenoA({ 320.f * rA, 22.f });
+    rellenoA.setFillColor(sf::Color(70, 130, 255));
+    rellenoA.setPosition(75.f, 24.f);
+    window.draw(rellenoA);
+    window.draw(sprBarraAzul);
+
+    // Barra de vida roja (derecha)
+    int mR = piezaRojaCombate ? piezaRojaCombate->getVidaMax() : 100;
     float rR = std::max(0.f, (float)vidaRojaCombate / mR);
-
-    sf::RectangleShape fA({ 300.f,22.f }); fA.setFillColor(sf::Color(60, 60, 60)); fA.setPosition(20.f, 20.f); window.draw(fA);
-    sf::RectangleShape fR({ 300.f,22.f }); fR.setFillColor(sf::Color(60, 60, 60)); fR.setPosition(960.f, 20.f); window.draw(fR);
-    sf::RectangleShape bA({ 300.f * rA,22.f }); bA.setFillColor(rA > 0.5f ? sf::Color::Green : sf::Color::Red); bA.setPosition(20.f, 20.f); window.draw(bA);
-    sf::RectangleShape bR({ 300.f * rR,22.f }); bR.setFillColor(rR > 0.5f ? sf::Color::Green : sf::Color::Red); bR.setPosition(960.f, 20.f); window.draw(bR);
-
+    // Marco (invertido para que el escudo quede a la derecha)
+    sprBarraRoja.setScale(-400.f / texBarraRoja.getSize().x, 60.f / texBarraRoja.getSize().y);
+    sprBarraRoja.setPosition(1270.f, 5.f);
+    // Relleno
+    sf::RectangleShape rellenoR({ 320.f * rR, 22.f });
+    rellenoR.setFillColor(sf::Color(255, 60, 60));
+    rellenoR.setPosition(880.f + 320.f * (1.f - rR), 24.f);
+    window.draw(rellenoR);
+    window.draw(sprBarraRoja);
     if (fuenteCargada) {
         sf::Text tA(piezaAzulCombate ? piezaAzulCombate->getNombre() : "Azul", fuente, 16);
         tA.setFillColor(sf::Color(150, 200, 255)); tA.setPosition(20.f, 46.f); window.draw(tA);

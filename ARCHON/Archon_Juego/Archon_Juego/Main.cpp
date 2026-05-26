@@ -1,7 +1,6 @@
 #include <SFML/Graphics.hpp>
 #include "Coordinador.h"
 
-// Puntero global a la ventana, usado por tablero.cpp para dibujar
 sf::RenderWindow* gVentana = nullptr;
 
 int main() {

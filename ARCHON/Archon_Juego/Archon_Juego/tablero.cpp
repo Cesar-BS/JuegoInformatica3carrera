@@ -2,6 +2,7 @@
 #include <SFML/Graphics.hpp>
 #include <cmath>
 #include <vector>
+#include <map>
 
 // La ventana se pasa desde el coordinador
 // Para dibujar usamos una referencia externa
@@ -44,27 +45,51 @@ void Tablero::inicializa() {
     for (auto& p : std::vector<std::pair<int, int>>{ {4,4},{0,4},{8,4},{4,0},{4,8} })
         matriz[p.first][p.second].esPuntoPoder = true;
 
-    // --- Bando Azul (columna 0) ---
-    matriz[0][0].pieza = new Caballero(Equipo::Azul);
-    matriz[1][0].pieza = new Arqueras(Equipo::Azul);
+    // --- Bando Azul ---
+    // Columna 0 (piezas especiales)
+    matriz[0][0].pieza = new Valkiria(Equipo::Azul);
+    matriz[1][0].pieza = new Golem(Equipo::Azul);
     matriz[2][0].pieza = new Dragon(Equipo::Azul);
-    matriz[3][0].pieza = new Golem(Equipo::Azul);
+    matriz[3][0].pieza = new Curandera(Equipo::Azul);
     matriz[4][0].pieza = new Mago(Equipo::Azul);
-    matriz[5][0].pieza = new Golem(Equipo::Azul);
-    matriz[6][0].pieza = new Valkiria(Equipo::Azul);
-    matriz[7][0].pieza = new Arqueras(Equipo::Azul);
-    matriz[8][0].pieza = new Caballero(Equipo::Azul);
+    matriz[5][0].pieza = new Murcielago(Equipo::Azul);
+    matriz[6][0].pieza = new Dragon(Equipo::Azul);
+    matriz[7][0].pieza = new Golem(Equipo::Azul);
+    matriz[8][0].pieza = new Valkiria(Equipo::Azul);
 
-    // --- Bando Rojo (columna 8) ---
-    matriz[0][8].pieza = new Caballero_oscuro(Equipo::Rojo);
-    matriz[1][8].pieza = new Reina_arquera(Equipo::Rojo);
+    // Columna 1 (caballeros)
+    matriz[0][1].pieza = new Arqueras(Equipo::Azul);
+    matriz[1][1].pieza = new Caballero(Equipo::Azul);
+    matriz[2][1].pieza = new Caballero(Equipo::Azul);
+    matriz[3][1].pieza = new Caballero(Equipo::Azul);
+    matriz[4][1].pieza = new Caballero(Equipo::Azul);
+    matriz[5][1].pieza = new Caballero(Equipo::Azul);
+    matriz[6][1].pieza = new Caballero(Equipo::Azul);
+    matriz[7][1].pieza = new Caballero(Equipo::Azul);
+    matriz[8][1].pieza = new Arqueras(Equipo::Azul);
+
+    // --- Bando Rojo ---
+    // Columna 8 (piezas especiales)
+    matriz[0][8].pieza = new Bandida(Equipo::Rojo);
+    matriz[1][8].pieza = new PEKKA(Equipo::Rojo);
     matriz[2][8].pieza = new Dragon_infernal(Equipo::Rojo);
-    matriz[3][8].pieza = new PEKKA(Equipo::Rojo);
+    matriz[3][8].pieza = new Esbirro(Equipo::Rojo);
     matriz[4][8].pieza = new Bruja(Equipo::Rojo);
-    matriz[5][8].pieza = new PEKKA(Equipo::Rojo);
-    matriz[6][8].pieza = new Bandida(Equipo::Rojo);
-    matriz[7][8].pieza = new Reina_arquera(Equipo::Rojo);
-    matriz[8][8].pieza = new Caballero_oscuro(Equipo::Rojo);
+    matriz[5][8].pieza = new Dragon_electrico(Equipo::Rojo);
+    matriz[6][8].pieza = new Dragon_infernal(Equipo::Rojo);
+    matriz[7][8].pieza = new PEKKA(Equipo::Rojo);
+    matriz[8][8].pieza = new Bandida(Equipo::Rojo);
+
+    // Columna 7 (caballeros oscuros)
+    matriz[0][7].pieza = new Reina_arquera(Equipo::Rojo);
+    matriz[1][7].pieza = new Caballero_oscuro(Equipo::Rojo);
+    matriz[2][7].pieza = new Caballero_oscuro(Equipo::Rojo);
+    matriz[3][7].pieza = new Caballero_oscuro(Equipo::Rojo);
+    matriz[4][7].pieza = new Caballero_oscuro(Equipo::Rojo);
+    matriz[5][7].pieza = new Caballero_oscuro(Equipo::Rojo);
+    matriz[6][7].pieza = new Caballero_oscuro(Equipo::Rojo);
+    matriz[7][7].pieza = new Caballero_oscuro(Equipo::Rojo);
+    matriz[8][7].pieza = new Reina_arquera(Equipo::Rojo);
 }
 
 // =========================================================
@@ -116,18 +141,40 @@ void Tablero::dibuja() const {
             if (matriz[i][j].pieza) {
                 Pieza* p = matriz[i][j].pieza;
 
-                sf::CircleShape circ(TAM_CASILLA * 0.33f);
-                circ.setOrigin(TAM_CASILLA * 0.33f, TAM_CASILLA * 0.33f);
-                circ.setPosition(
-                    OFFSET_X + j * TAM_CASILLA + TAM_CASILLA / 2.f,
-                    OFFSET_Y + i * TAM_CASILLA + TAM_CASILLA / 2.f
-                );
-                circ.setFillColor(p->getEquipo() == Equipo::Azul
-                    ? sf::Color(70, 130, 220)
-                    : sf::Color(220, 60, 60));
-                circ.setOutlineColor(sf::Color::White);
-                circ.setOutlineThickness(2.f);
-                window.draw(circ);
+                static std::map<std::string, sf::Texture> texturas;
+                static bool texCargadas = false;
+                if (!texCargadas) {
+                    texturas["Caballero"].loadFromFile("assets/caballero.png");
+                    texturas["Caballero_oscuro"].loadFromFile("assets/principe oscuro.png");
+                    texturas["Golem"].loadFromFile("assets/golem.png");
+                    texturas["PEKKA"].loadFromFile("assets/pekka.png");
+                    texturas["Dragon"].loadFromFile("assets/dragon.png");
+                    texturas["Dragon_infernal"].loadFromFile("assets/dragon infernal.png");
+                    texturas["Arqueras"].loadFromFile("assets/arquera.png");
+                    texturas["Reina_arquera"].loadFromFile("assets/reina arquera.png");
+                    texturas["Valkiria"].loadFromFile("assets/valkiria.png");
+                    texturas["Bandida"].loadFromFile("assets/bandida.png");
+                    texturas["Curandera"].loadFromFile("assets/curandera.png");
+                    texturas["Murcielago"].loadFromFile("assets/fenix.png");
+                    texturas["Esbirro"].loadFromFile("assets/esbirro.png");
+                    texturas["Dragon_electrico"].loadFromFile("assets/dragon electrico.png");
+                    texturas["Mago"].loadFromFile("assets/mago.png");
+                    texturas["Bruja"].loadFromFile("assets/bruja.png");
+                    texCargadas = true;
+                }
+
+                std::string nombre = p->getNombre();
+                if (texturas.count(nombre) > 0) {
+                    sf::Sprite spr;
+                    spr.setTexture(texturas[nombre]);
+                    float escala = (TAM_CASILLA - 4.f) / texturas[nombre].getSize().x;
+                    spr.setScale(escala, escala);
+                    spr.setPosition(
+                        OFFSET_X + j * TAM_CASILLA + 2.f,
+                        OFFSET_Y + i * TAM_CASILLA + 2.f
+                    );
+                    window.draw(spr);
+                }
 
                 // Barra de vida
                 float ratio = static_cast<float>(p->getVida()) / p->getVidaMax();
@@ -212,7 +259,55 @@ void Tablero::finalizarTurno() {
     contadorTurnos++;
 }
 
+// Cuenta cuántas piezas vivas tiene un equipo
+int Tablero::contarPiezas(Equipo equipo) const {
+    int count = 0;
+    for (int i = 0; i < TAM; ++i)
+        for (int j = 0; j < TAM; ++j)
+            if (matriz[i][j].pieza && matriz[i][j].pieza->getEquipo() == equipo)
+                count++;
+    return count;
+}
+
+// Cuenta cuántos puntos de poder ocupa un equipo
+int Tablero::contarPuntosPoder(Equipo equipo) const {
+    int count = 0;
+    for (int i = 0; i < TAM; ++i)
+        for (int j = 0; j < TAM; ++j)
+            if (matriz[i][j].esPuntoPoder &&
+                matriz[i][j].pieza &&
+                matriz[i][j].pieza->getEquipo() == equipo)
+                count++;
+    return count;
+}
+
+// Condición 3: el rival solo tiene una pieza y está encarcelada
+bool Tablero::soloQuedaEncarcelada(Equipo equipo) const {
+    int total = 0;
+    int encarceladas = 0;
+    for (int i = 0; i < TAM; ++i)
+        for (int j = 0; j < TAM; ++j)
+            if (matriz[i][j].pieza && matriz[i][j].pieza->getEquipo() == equipo) {
+                total++;
+                if (matriz[i][j].pieza->estaEncarcelada())
+                    encarceladas++;
+            }
+    return (total == 1 && encarceladas == 1);
+}
+
 ResultadoVictoria Tablero::comprobarVictoria() const {
+    // Condición 1: controlar los 5 puntos de poder
+    if (contarPuntosPoder(Equipo::Azul) == 5)  return ResultadoVictoria::GanaAzul;
+    if (contarPuntosPoder(Equipo::Rojo) == 5)  return ResultadoVictoria::GanaRojo;
+
+    // Condición 2: el rival no tiene piezas
+    if (contarPiezas(Equipo::Rojo) == 0)       return ResultadoVictoria::GanaAzul;
+    if (contarPiezas(Equipo::Azul) == 0)       return ResultadoVictoria::GanaRojo;
+
+    // Condición 3: al rival solo le queda una pieza encarcelada
+    if (soloQuedaEncarcelada(Equipo::Rojo))    return ResultadoVictoria::GanaAzul;
+    if (soloQuedaEncarcelada(Equipo::Azul))    return ResultadoVictoria::GanaRojo;
+
     return ResultadoVictoria::Ninguno;
 }
 
