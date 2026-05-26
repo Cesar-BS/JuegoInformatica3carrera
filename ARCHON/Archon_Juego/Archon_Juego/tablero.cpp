@@ -91,7 +91,6 @@ void Tablero::inicializa() {
     matriz[7][7].pieza = new Caballero_oscuro(Equipo::Rojo);
     matriz[8][7].pieza = new Reina_arquera(Equipo::Rojo);
 }
-}
 
 // =========================================================
 // DIBUJA
