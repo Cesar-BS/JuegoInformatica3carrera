@@ -237,7 +237,19 @@ void Coordinador::dibujar(sf::RenderWindow& window) {
 }
 
 void Coordinador::dibujarCombate(sf::RenderWindow& window) {
-    arenaVisual.dibujar(window);
+    static sf::Texture texCombate;
+    static sf::Sprite sprCombate;
+    static bool combateCargado = false;
+    if (!combateCargado) {
+        texCombate.loadFromFile("assets/combate_bueno.png");
+        sprCombate.setTexture(texCombate);
+        sprCombate.setScale(
+            1280.f / texCombate.getSize().x,
+            720.f / texCombate.getSize().y
+        );
+        combateCargado = true;
+    }
+    window.draw(sprCombate);
 
     sf::CircleShape sA(24.f); sA.setOrigin(24.f, 24.f);
     sA.setFillColor(sf::Color(70, 130, 220)); sA.setOutlineColor(sf::Color::White); sA.setOutlineThickness(2.f);
@@ -249,15 +261,40 @@ void Coordinador::dibujarCombate(sf::RenderWindow& window) {
 
     for (auto& p : proyectiles) if (p.activo) window.draw(p.forma);
 
-    int mA = piezaAzulCombate ? piezaAzulCombate->getVidaMax() : 100;
-    int mR = piezaRojaCombate ? piezaRojaCombate->getVidaMax() : 100;
-    float rA = std::max(0.f, (float)vidaAzulCombate / mA);
-    float rR = std::max(0.f, (float)vidaRojaCombate / mR);
+    
+    // Cargar marcos de barras de vida
+    static sf::Texture texBarraAzul, texBarraRoja;
+    static sf::Sprite sprBarraAzul, sprBarraRoja;
+    static bool barrasCargadas = false;
+    if (!barrasCargadas) {
+        texBarraAzul.loadFromFile("assets/barra_azul.png");
+        texBarraRoja.loadFromFile("assets/barra_roja.png");
+        sprBarraAzul.setTexture(texBarraAzul);
+        sprBarraRoja.setTexture(texBarraRoja);
+        barrasCargadas = true;
+    }
 
-    sf::RectangleShape fA({ 300.f,22.f }); fA.setFillColor(sf::Color(60, 60, 60)); fA.setPosition(20.f, 20.f); window.draw(fA);
-    sf::RectangleShape fR({ 300.f,22.f }); fR.setFillColor(sf::Color(60, 60, 60)); fR.setPosition(960.f, 20.f); window.draw(fR);
-    sf::RectangleShape bA({ 300.f * rA,22.f }); bA.setFillColor(rA > 0.5f ? sf::Color::Green : sf::Color::Red); bA.setPosition(20.f, 20.f); window.draw(bA);
-    sf::RectangleShape bR({ 300.f * rR,22.f }); bR.setFillColor(rR > 0.5f ? sf::Color::Green : sf::Color::Red); bR.setPosition(960.f, 20.f); window.draw(bR);
+    // Barra de vida azul (izquierda)
+    int mA = piezaAzulCombate ? piezaAzulCombate->getVidaMax() : 100;
+    float rA = std::max(0.f, (float)vidaAzulCombate / mA);
+    sf::RectangleShape rellenoA({ 280.f * rA, 20.f });
+    rellenoA.setFillColor(sf::Color(70, 130, 220));
+    rellenoA.setPosition(60.f, 28.f);
+    window.draw(rellenoA);
+    sprBarraAzul.setScale(400.f / texBarraAzul.getSize().x, 50.f / texBarraAzul.getSize().y);
+    sprBarraAzul.setPosition(20.f, 10.f);
+    window.draw(sprBarraAzul);
+
+    // Barra de vida roja (derecha)
+    int mR = piezaRojaCombate ? piezaRojaCombate->getVidaMax() : 100;
+    float rR = std::max(0.f, (float)vidaRojaCombate / mR);
+    sf::RectangleShape rellenoR({ 280.f * rR, 20.f });
+    rellenoR.setFillColor(sf::Color(220, 60, 60));
+    rellenoR.setPosition(860.f, 28.f);
+    window.draw(rellenoR);
+    sprBarraRoja.setScale(400.f / texBarraRoja.getSize().x, 50.f / texBarraRoja.getSize().y);
+    sprBarraRoja.setPosition(860.f, 10.f);
+    window.draw(sprBarraRoja);
 
     if (fuenteCargada) {
         sf::Text tA(piezaAzulCombate ? piezaAzulCombate->getNombre() : "Azul", fuente, 16);
