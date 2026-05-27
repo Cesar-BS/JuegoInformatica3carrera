@@ -296,7 +296,7 @@ bool Tablero::soloQuedaEncarcelada(Equipo equipo) const {
 }
 
 ResultadoVictoria Tablero::comprobarVictoria() const {
-  //  return ResultadoVictoria::GanaAzul; // TEST - borrar después
+    return ResultadoVictoria::GanaAzul; // TEST - borrar después
     // Condición 1: controlar los 5 puntos de poder
     if (contarPuntosPoder(Equipo::Azul) == 5)  return ResultadoVictoria::GanaAzul;
     if (contarPuntosPoder(Equipo::Rojo) == 5)  return ResultadoVictoria::GanaRojo;
