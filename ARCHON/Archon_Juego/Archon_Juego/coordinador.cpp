@@ -319,13 +319,60 @@ void Coordinador::dibujarCombate(sf::RenderWindow& window) {
         window.draw(obs.sprite);
     }
 
-    sf::CircleShape sA(24.f); sA.setOrigin(24.f, 24.f);
-    sA.setFillColor(sf::Color(70, 130, 220)); sA.setOutlineColor(sf::Color::White); sA.setOutlineThickness(2.f);
-    sA.setPosition(posAzul); window.draw(sA);
+    // Cargar las texturas de los personajes solo una vez 
+    static std::map<std::string, sf::Texture> texturasCombate;
+    static bool texCargadas = false;
+    if (!texCargadas) {
+        texturasCombate["Caballero"].loadFromFile("assets/caballero.png");
+        texturasCombate["Caballero_oscuro"].loadFromFile("assets/principe oscuro.png");
+        texturasCombate["Golem"].loadFromFile("assets/golem.png");
+        texturasCombate["PEKKA"].loadFromFile("assets/pekka.png");
+        texturasCombate["Dragon"].loadFromFile("assets/dragon.png");
+        texturasCombate["Dragon_infernal"].loadFromFile("assets/dragon infernal.png");
+        texturasCombate["Arqueras"].loadFromFile("assets/arquera.png");
+        texturasCombate["Reina_arquera"].loadFromFile("assets/reina arquera.png");
+        texturasCombate["Valkiria"].loadFromFile("assets/valkiria.png");
+        texturasCombate["Bandida"].loadFromFile("assets/bandida.png");
+        texturasCombate["Curandera"].loadFromFile("assets/curandera.png");
+        texturasCombate["Murcielago"].loadFromFile("assets/fenix.png");
+        texturasCombate["Esbirro"].loadFromFile("assets/esbirro.png");
+        texturasCombate["Dragon_electrico"].loadFromFile("assets/dragon electrico.png");
+        texturasCombate["Mago"].loadFromFile("assets/mago.png");
+        texturasCombate["Bruja"].loadFromFile("assets/bruja.png");
+        texCargadas = true;
+    }
 
-    sf::CircleShape sR(24.f); sR.setOrigin(24.f, 24.f);
-    sR.setFillColor(sf::Color(220, 60, 60)); sR.setOutlineColor(sf::Color::White); sR.setOutlineThickness(2.f);
-    sR.setPosition(posRoja); window.draw(sR);
+    // Dibujar el personaje AZUL
+    if (piezaAzulCombate) {
+        std::string nombreAzul = piezaAzulCombate->getNombre();
+        if (texturasCombate.count(nombreAzul) > 0) {
+            sf::Sprite sprAzul(texturasCombate[nombreAzul]);
+            // Centramos el origen en la mitad de la imagen para que coincida con la hitbox y dispare del centro
+            sprAzul.setOrigin(sprAzul.getTexture()->getSize().x / 2.f, sprAzul.getTexture()->getSize().y / 2.f);
+            sprAzul.setPosition(posAzul);
+
+            // Calculamos una escala para que midan unos 80 píxeles en la arena
+            float escalaA = 80.f / texturasCombate[nombreAzul].getSize().x;
+            sprAzul.setScale(escalaA, escalaA);
+            window.draw(sprAzul);
+        }
+    }
+
+    // Dibujar el personaje ROJO
+    if (piezaRojaCombate) {
+        std::string nombreRojo = piezaRojaCombate->getNombre();
+        if (texturasCombate.count(nombreRojo) > 0) {
+            sf::Sprite sprRojo(texturasCombate[nombreRojo]);
+            sprRojo.setOrigin(sprRojo.getTexture()->getSize().x / 2.f, sprRojo.getTexture()->getSize().y / 2.f);
+            sprRojo.setPosition(posRoja);
+
+            float escalaR = 80.f / texturasCombate[nombreRojo].getSize().x;
+            // Le ponemos un menos (-) en la escala X para voltear la imagen 
+            // y que el equipo rojo siempre mire hacia la izquierda (hacia el enemigo)
+            sprRojo.setScale(-escalaR, escalaR);
+            window.draw(sprRojo);
+        }
+    }
 
     for (auto& p : proyectiles) if (p.activo) window.draw(p.forma);
 
