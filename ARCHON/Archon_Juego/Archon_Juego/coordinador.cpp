@@ -16,6 +16,7 @@ Coordinador::Coordinador()
     if (bufferMenu.loadFromFile("assets/clash-royale-start-up-sound.ogg"))
         sonidoMenu.setBuffer(bufferMenu);
     sonidoMenu.play();
+    texObstaculo.loadFromFile("assets/Tronco_Obstaculo.png");
 }
 
 void Coordinador::inicializar() {
@@ -83,6 +84,29 @@ void Coordinador::iniciarCombate() {
     recargaAzul = recargaRoja = 0.f;
     proyectiles.clear();
     relojCombate.restart();
+ 
+    obstaculos.clear();
+    // Crear un par de obstáculos en el centro del mapa
+    Obstaculo obs1, obs2;
+    obs1.sprite.setTexture(texObstaculo);
+    // Ajusta la posición
+    obs1.sprite.setScale(0.12f, 0.12f);
+
+    // Lo colocamos en la parte superior central de la arena
+    obs1.sprite.setPosition(500.f, 150.f);
+
+    // Calculamos la caja de colisión DESPUÉS de escalar para que el choque sea exacto
+    obs1.hitbox = obs1.sprite.getGlobalBounds();
+
+    // Segundo tronco (Abajo)
+    obs2.sprite.setTexture(texObstaculo);
+    obs2.sprite.setScale(0.12f, 0.12f); // Usa la misma escala que el primero
+    obs2.sprite.setPosition(650.f, 480.f); // Lo colocamos en la parte inferior
+    obs2.hitbox = obs2.sprite.getGlobalBounds();
+
+    // Los añadimos a la arena
+    obstaculos.push_back(obs1);
+    obstaculos.push_back(obs2);
 }
 
 void Coordinador::actualizar(sf::RenderWindow& window) {
@@ -116,6 +140,9 @@ void Coordinador::actualizar(sf::RenderWindow& window) {
 void Coordinador::actualizarCombate(float dt) {
     if (!piezaAzulCombate || !piezaRojaCombate) return;
 
+    sf::Vector2f posAzulAnt = posAzul;
+    sf::Vector2f posRojaAnt = posRoja;
+
     float vA = velAzul * dt;
     if (sf::Keyboard::isKeyPressed(sf::Keyboard::W)) posAzul.y -= vA;
     if (sf::Keyboard::isKeyPressed(sf::Keyboard::S)) posAzul.y += vA;
@@ -133,6 +160,21 @@ void Coordinador::actualizarCombate(float dt) {
         p.y = std::max(50.f, std::min(p.y, 670.f));
         };
     clamp(posAzul); clamp(posRoja);
+
+    //COLISIONES DE LOS JUGADORES CON LOS OBSTÁCULOS
+    sf::FloatRect hitboxAzul(posAzul.x - 24, posAzul.y - 24, 48, 48);
+    for (const auto& obs : obstaculos) {
+        if (hitboxAzul.intersects(obs.hitbox)) {
+            posAzul = posAzulAnt; // Si choca, anulamos el movimiento
+        }
+    }
+
+    sf::FloatRect hitboxRoja(posRoja.x - 24, posRoja.y - 24, 48, 48);
+    for (const auto& obs : obstaculos) {
+        if (hitboxRoja.intersects(obs.hitbox)) {
+            posRoja = posRojaAnt; // Si choca, anulamos el movimiento
+        }
+    }
 
     recargaAzul -= dt; recargaRoja -= dt;
 
@@ -153,6 +195,21 @@ void Coordinador::actualizarCombate(float dt) {
         if (pos.x < 0 || pos.x > 1280 || pos.y < 0 || pos.y > 720) { p.activo = false; continue; }
 
         sf::FloatRect pb = p.forma.getGlobalBounds();
+
+        //COLISIONES DE LOS PROYECTILES CON LOS OBSTÁCULOS
+        bool chocoObstaculo = false;
+        for (const auto& obs : obstaculos) {
+            if (pb.intersects(obs.hitbox)) {
+                p.activo = false; // El disparo choca contra el tronco y desaparece
+                chocoObstaculo = true;
+                break;
+            }
+        }
+
+        // Si el proyectil chocó contra un obstáculo, pasamos al siguiente proyectil
+        if (chocoObstaculo) continue;
+
+        // Lógica de daño original
         if (p.esAzul) {
             if (pb.intersects({ posRoja.x - 24, posRoja.y - 24, 48, 48 })) {
                 vidaRojaCombate = std::max(0, vidaRojaCombate - p.danio);
@@ -257,6 +314,10 @@ void Coordinador::dibujarCombate(sf::RenderWindow& window) {
         combateCargado = true;
     }
     window.draw(sprCombate);
+ 
+    for (const auto& obs : obstaculos) {
+        window.draw(obs.sprite);
+    }
 
     sf::CircleShape sA(24.f); sA.setOrigin(24.f, 24.f);
     sA.setFillColor(sf::Color(70, 130, 220)); sA.setOutlineColor(sf::Color::White); sA.setOutlineThickness(2.f);

@@ -44,6 +44,13 @@ private:
     };
     std::vector<Proyectil> proyectiles;
 
+    struct Obstaculo {
+        sf::Sprite sprite;
+        sf::FloatRect hitbox;
+    };
+    std::vector<Obstaculo> obstaculos;
+    sf::Texture texObstaculo;
+
     sf::Font fuente;
     bool     fuenteCargada = false;
     std::string ganadorTexto = "";
