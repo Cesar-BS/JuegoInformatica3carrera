@@ -176,53 +176,111 @@ void Coordinador::actualizarCombate(float dt) {
         }
     }
 
-    recargaAzul -= dt; recargaRoja -= dt;
+    // quitar esto: recargaAzul -= dt; recargaRoja -= dt;
 
     float intA = std::max(0.2f, 1.5f - piezaAzulCombate->getVelocidadAtaque() * 0.13f);
     float intR = std::max(0.2f, 1.5f - piezaRojaCombate->getVelocidadAtaque() * 0.13f);
 
-    if (sf::Keyboard::isKeyPressed(sf::Keyboard::Space) && recargaAzul <= 0.f) {
-        dispararAzul(); recargaAzul = intA;
-    }
-    if (sf::Keyboard::isKeyPressed(sf::Keyboard::Return) && recargaRoja <= 0.f) {
-        dispararRoja(); recargaRoja = intR;
+
+    // ── Daño cuerpo a cuerpo (sin proyectil) ────────────────────────────────
+    auto distancia = [](sf::Vector2f a, sf::Vector2f b) {
+        float dx = a.x - b.x, dy = a.y - b.y;
+        return std::sqrt(dx * dx + dy * dy);
+    };
+
+    const float RANGO_CAC = 55.f;  // píxeles para que golpee
+
+    if (piezaAzulCombate->getArma() == TipoArma::CuerpoACuerpo) {
+        recargaAzul -= dt;
+        if (distancia(posAzul, posRoja) < RANGO_CAC && recargaAzul <= 0.f) {
+            vidaRojaCombate = std::max(0, vidaRojaCombate - piezaAzulCombate->getFuerzaAtaque());
+            float intA = std::max(0.2f, 1.5f - piezaAzulCombate->getVelocidadAtaque() * 0.13f);
+            recargaAzul = intA;
+        }
     }
 
+    if (piezaRojaCombate->getArma() == TipoArma::CuerpoACuerpo) {
+        recargaRoja -= dt;
+        if (distancia(posAzul, posRoja) < RANGO_CAC && recargaRoja <= 0.f) {
+            vidaAzulCombate = std::max(0, vidaAzulCombate - piezaRojaCombate->getFuerzaAtaque());
+            float intR = std::max(0.2f, 1.5f - piezaRojaCombate->getVelocidadAtaque() * 0.13f);
+            recargaRoja = intR;
+        }
+    }
+
+    // Disparo con tecla solo para piezas que NO son CuerpoACuerpo
+    float intA = std::max(0.2f, 1.5f - piezaAzulCombate->getVelocidadAtaque() * 0.13f);
+    float intR = std::max(0.2f, 1.5f - piezaRojaCombate->getVelocidadAtaque() * 0.13f);
+
+    if (piezaAzulCombate->getArma() != TipoArma::CuerpoACuerpo) {
+        recargaAzul -= dt;
+        if (sf::Keyboard::isKeyPressed(sf::Keyboard::Space) && recargaAzul <= 0.f) {
+            dispararAzul(); recargaAzul = intA;
+        }
+    }
+    if (piezaRojaCombate->getArma() != TipoArma::CuerpoACuerpo) {
+        recargaRoja -= dt;
+        if (sf::Keyboard::isKeyPressed(sf::Keyboard::Return) && recargaRoja <= 0.f) {
+            dispararRoja(); recargaRoja = intR;
+        }
+    }
+
+    // ── Mover proyectiles y aplicar daño ────────────────────────────────────
     for (auto& p : proyectiles) {
         if (!p.activo) continue;
         p.forma.move(p.vel);
         auto pos = p.forma.getPosition();
-        if (pos.x < 0 || pos.x > 1280 || pos.y < 0 || pos.y > 720) { p.activo = false; continue; }
+
+        // Fuera de pantalla
+        if (pos.x < 0 || pos.x > 1280 || pos.y < 0 || pos.y > 720) {
+            p.activo = false; continue;
+        }
+
+        // Colisión con obstáculos (solo si NO es magia)
+        if (!p.atraviesaObstaculos) {
+            for (const auto& obs : obstaculos) {
+                if (p.forma.getGlobalBounds().intersects(obs.hitbox)) {
+                    p.activo = false; break;
+                }
+            }
+            if (!p.activo) continue;
+        }
 
         sf::FloatRect pb = p.forma.getGlobalBounds();
 
-        //COLISIONES DE LOS PROYECTILES CON LOS OBSTÁCULOS
-        bool chocoObstaculo = false;
-        for (const auto& obs : obstaculos) {
-            if (pb.intersects(obs.hitbox)) {
-                p.activo = false; // El disparo choca contra el tronco y desaparece
-                chocoObstaculo = true;
-                break;
-            }
-        }
-
-        // Si el proyectil chocó contra un obstáculo, pasamos al siguiente proyectil
-        if (chocoObstaculo) continue;
-
-        // Lógica de daño original
         if (p.esAzul) {
-            if (pb.intersects({ posRoja.x - 24, posRoja.y - 24, 48, 48 })) {
-                vidaRojaCombate = std::max(0, vidaRojaCombate - p.danio);
+            sf::FloatRect hitR(posRoja.x - 24, posRoja.y - 24, 48, 48);
+            if (pb.intersects(hitR)) {
+                if (p.esExplosion) {
+                    // Explosión: daño reducido también al atacante si está cerca
+                    vidaRojaCombate = std::max(0, vidaRojaCombate - p.danio);
+                    if (distancia(posAzul, posRoja) < p.radioExplosion)
+                        vidaAzulCombate = std::max(0, vidaAzulCombate - p.danio / 3);
+                }
+                else {
+                    vidaRojaCombate = std::max(0, vidaRojaCombate - p.danio);
+                }
                 p.activo = false;
             }
         }
         else {
-            if (pb.intersects({ posAzul.x - 24, posAzul.y - 24, 48, 48 })) {
-                vidaAzulCombate = std::max(0, vidaAzulCombate - p.danio);
+            sf::FloatRect hitA(posAzul.x - 24, posAzul.y - 24, 48, 48);
+            if (pb.intersects(hitA)) {
+                if (p.esExplosion) {
+                    vidaAzulCombate = std::max(0, vidaAzulCombate - p.danio);
+                    if (distancia(posAzul, posRoja) < p.radioExplosion)
+                        vidaRojaCombate = std::max(0, vidaRojaCombate - p.danio / 3);
+                }
+                else {
+                    vidaAzulCombate = std::max(0, vidaAzulCombate - p.danio);
+                }
                 p.activo = false;
             }
         }
     }
+
+    proyectiles.erase(std::remove_if(proyectiles.begin(), proyectiles.end(),
+        [](const Proyectil& p) { return !p.activo; }), proyectiles.end());
     proyectiles.erase(std::remove_if(proyectiles.begin(), proyectiles.end(),
         [](const Proyectil& p) { return !p.activo; }), proyectiles.end());
 
@@ -243,34 +301,83 @@ void Coordinador::actualizarCombate(float dt) {
     }
 }
 
-void Coordinador::dispararAzul() {
-    sf::Vector2f dir = posRoja - posAzul;
+// ── Helper interno para crear un proyectil base ─────────────────────────
+static Coordinador::Proyectil crearProyectil(
+    sf::Vector2f origen, sf::Vector2f destino,
+    int fuerzaAtaque, int alcance, bool esAzul,
+    TipoArma arma)
+{
+    sf::Vector2f dir = destino - origen;
     float len = std::sqrt(dir.x * dir.x + dir.y * dir.y);
-    if (len < 1.f) return;
-    dir /= len;
-    Proyectil p;
-    p.forma.setRadius(6.f); p.forma.setOrigin(6.f, 6.f);
-    p.forma.setFillColor(sf::Color(100, 180, 255));
-    p.forma.setPosition(posAzul);
-    p.vel = dir * (300.f + piezaAzulCombate->getAlcanceAtaque() * 15.f) / 60.f;
-    p.danio = piezaAzulCombate->getFuerzaAtaque();
-    p.esAzul = true;
-    proyectiles.push_back(p);
+    if (len < 1.f) dir = { 1.f, 0.f };
+    else dir /= len;
+
+    Coordinador::Proyectil p;
+    p.esAzul = esAzul;
+    p.activo = true;
+    p.atraviesaObstaculos = false;
+    p.esExplosion = false;
+    p.radioExplosion = 0.f;
+
+    switch (arma) {
+    case TipoArma::CuerpoACuerpo:
+        // No genera proyectil, se maneja en actualizarCombate
+        p.activo = false;
+        break;
+
+    case TipoArma::Proyectil:
+        p.forma.setRadius(6.f);
+        p.forma.setOrigin(6.f, 6.f);
+        p.forma.setFillColor(esAzul ? sf::Color(100, 220, 255) : sf::Color(255, 160, 60));
+        p.forma.setPosition(origen);
+        p.vel = dir * (320.f + alcance * 15.f) / 60.f;
+        p.danio = fuerzaAtaque;
+        break;
+
+    case TipoArma::Magia:
+        p.forma.setRadius(9.f);
+        p.forma.setOrigin(9.f, 9.f);
+        p.forma.setFillColor(esAzul ? sf::Color(180, 100, 255) : sf::Color(100, 255, 180));
+        p.forma.setPosition(origen);
+        p.vel = dir * (200.f + alcance * 10.f) / 60.f;  // más lento
+        p.danio = fuerzaAtaque;
+        p.atraviesaObstaculos = true;  // la magia no rebota en obstáculos
+        break;
+
+    case TipoArma::ExplosionArea:
+        p.forma.setRadius(7.f);
+        p.forma.setOrigin(7.f, 7.f);
+        p.forma.setFillColor(sf::Color(255, 120, 0));
+        p.forma.setPosition(origen);
+        p.vel = dir * (260.f + alcance * 12.f) / 60.f;
+        p.danio = fuerzaAtaque;
+        p.esExplosion = true;
+        p.radioExplosion = 80.f;
+        break;
+    }
+    return p;
+}
+
+void Coordinador::dispararAzul() {
+    if (!piezaAzulCombate) return;
+    TipoArma arma = piezaAzulCombate->getArma();
+    if (arma == TipoArma::CuerpoACuerpo) return; // sin proyectil
+    auto p = crearProyectil(posAzul, posRoja,
+        piezaAzulCombate->getFuerzaAtaque(),
+        piezaAzulCombate->getAlcanceAtaque(),
+        true, arma);
+    if (p.activo) proyectiles.push_back(p);
 }
 
 void Coordinador::dispararRoja() {
-    sf::Vector2f dir = posAzul - posRoja;
-    float len = std::sqrt(dir.x * dir.x + dir.y * dir.y);
-    if (len < 1.f) return;
-    dir /= len;
-    Proyectil p;
-    p.forma.setRadius(6.f); p.forma.setOrigin(6.f, 6.f);
-    p.forma.setFillColor(sf::Color(255, 100, 100));
-    p.forma.setPosition(posRoja);
-    p.vel = dir * (300.f + piezaRojaCombate->getAlcanceAtaque() * 15.f) / 60.f;
-    p.danio = piezaRojaCombate->getFuerzaAtaque();
-    p.esAzul = false;
-    proyectiles.push_back(p);
+    if (!piezaRojaCombate) return;
+    TipoArma arma = piezaRojaCombate->getArma();
+    if (arma == TipoArma::CuerpoACuerpo) return;
+    auto p = crearProyectil(posRoja, posAzul,
+        piezaRojaCombate->getFuerzaAtaque(),
+        piezaRojaCombate->getAlcanceAtaque(),
+        false, arma);
+    if (p.activo) proyectiles.push_back(p);
 }
 
 void Coordinador::dibujar(sf::RenderWindow& window) {

@@ -41,6 +41,9 @@ private:
         int             danio;
         bool            esAzul;
         bool            activo = true;
+        bool            atraviesaObstaculos = false;
+        bool            esExplosion = false;
+        float           radioExplosion = 0.f;
     };
     std::vector<Proyectil> proyectiles;
 
