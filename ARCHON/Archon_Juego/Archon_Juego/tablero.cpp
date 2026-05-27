@@ -352,3 +352,110 @@ bool Tablero::hayCombatePendiente() const {
 
 void Tablero::mueve(double dt) {}
 void Tablero::tecla(unsigned char key) {}
+
+// Busca al lanzador de hechizos del equipo dado y devuelve su posición
+bool Tablero::buscarLanzador(Equipo equipo, int& fx, int& fy) const {
+    for (int i = 0; i < TAM; ++i)
+        for (int j = 0; j < TAM; ++j) {
+            Pieza* p = matriz[i][j].pieza;
+            if (!p || p->getEquipo() != equipo) continue;
+            // Es LanzadorHechizos si su rangoTablero es 99 
+            if (p->getRangoTablero() == 99) { fx = i; fy = j; return true; }
+        }
+    return false;
+}
+
+// Comprueba que en (x,y) hay una pieza del equipo dado
+bool Tablero::buscarPieza(Equipo equipo, int x, int y) const {
+    if (x < 0 || x >= TAM || y < 0 || y >= TAM) return false;
+    return matriz[x][y].pieza && matriz[x][y].pieza->getEquipo() == equipo;
+}
+
+// Comprueba que (x,y) está vacía y dentro del tablero
+bool Tablero::casillaLibre(int x, int y) const {
+    if (x < 0 || x >= TAM || y < 0 || y >= TAM) return false;
+    return matriz[x][y].pieza == nullptr;
+}
+
+bool Tablero::ejecutarHechizo(int idHechizo, int x, int y, int x2, int y2) {
+    // Solo puede hechizar el equipo cuyo turno es
+    Equipo equipoActual = turnoActual;
+    Equipo equipoRival = (equipoActual == Equipo::Azul) ? Equipo::Rojo : Equipo::Azul;
+
+    // Buscar al lanzador del equipo actual
+    int lx = -1, ly = -1;
+    if (!buscarLanzador(equipoActual, lx, ly)) return false;
+
+    // Verificar que el lanzador puede usar este hechizo
+    LanzadorHechizos* lanzador = dynamic_cast<LanzadorHechizos*>(matriz[lx][ly].pieza);
+    if (!lanzador) return false;
+
+    IdHechizo id = static_cast<IdHechizo>(idHechizo);
+    if (!lanzador->puedeHechizar(id)) return false;
+
+    bool exito = false;
+
+    switch (id) {
+
+        // ── CURAR: cura completamente a una pieza aliada en (x,y) ─────────────
+    case IdHechizo::Curar:
+        if (buscarPieza(equipoActual, x, y)) {
+            matriz[x][y].pieza->curarTotal();
+            exito = true;
+        }
+        break;
+
+        // ── TELEPORTAR: mueve pieza aliada de (x,y) a (x2,y2) ────────────────
+    case IdHechizo::Teleportar:
+        if (buscarPieza(equipoActual, x, y) && casillaLibre(x2, y2)) {
+            matriz[x2][y2].pieza = matriz[x][y].pieza;
+            matriz[x][y].pieza = nullptr;
+            exito = true;
+        }
+        break;
+
+        // ── ENCARCELAR: inmoviliza una pieza rival en (x,y) ──────────────────
+    case IdHechizo::Encarcelar:
+        if (buscarPieza(equipoRival, x, y) &&
+            !matriz[x][y].esPuntoPoder)  // los puntos de poder son inmunes
+        {
+            matriz[x][y].pieza->setEncarcelada(true);
+            exito = true;
+        }
+        break;
+
+        // ── REVIVIR: resucita la última pieza eliminada junto al lanzador ─────
+    case IdHechizo::Revivir: {
+        std::vector<Pieza*>& eliminadas =
+            (equipoActual == Equipo::Azul) ? piezasEliminadasAzul : piezasEliminadasRojo;
+
+        if (eliminadas.empty()) break;
+
+        // Buscar casilla libre adyacente al lanzador
+        int dx[] = { 0, 0, 1, -1, 1, -1, 1, -1 };
+        int dy[] = { 1, -1, 0,  0, 1,  1,-1, -1 };
+        int destX = -1, destY = -1;
+        for (int d = 0; d < 8; ++d) {
+            int nx = lx + dx[d], ny = ly + dy[d];
+            if (casillaLibre(nx, ny)) { destX = nx; destY = ny; break; }
+        }
+        if (destX == -1) break; // no hay hueco
+
+        Pieza* revivida = eliminadas.back();
+        eliminadas.pop_back();
+        revivida->curarTotal();
+        matriz[destX][destY].pieza = revivida;
+        exito = true;
+        break;
+    }
+
+    default:
+        break;
+    }
+
+    if (exito) {
+        lanzador->marcarUsado(id);
+        finalizarTurno();
+    }
+    return exito;
+}

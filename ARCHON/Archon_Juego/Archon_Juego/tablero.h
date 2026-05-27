@@ -49,4 +49,13 @@ private:
     int contarPiezas(Equipo equipo) const;
     int contarPuntosPoder(Equipo equipo) const;
     bool soloQuedaEncarcelada(Equipo equipo) const;
+
+    // Hechizos
+    bool buscarLanzador(Equipo equipo, int& fx, int& fy) const;
+    bool buscarPieza(Equipo equipo, int x, int y) const;
+    bool casillaLibre(int x, int y) const;
+
+    // Piezas eliminadas (para Revivir)
+    std::vector<Pieza*> piezasEliminadasAzul;
+    std::vector<Pieza*> piezasEliminadasRojo;
 };
