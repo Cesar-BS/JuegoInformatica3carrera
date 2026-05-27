@@ -28,6 +28,12 @@ private:
     // Selección en el tablero
     int selFila = -1, selCol = -1;
 
+    // Teleport: necesita dos clics (origen y destino)
+    bool modoTeleport = false;
+    int  teleportOrigenFila = -1;
+    int  teleportOrigenCol = -1;
+
+
     // Combate en tiempo real
     sf::Clock    relojCombate;
     sf::Vector2f posAzul, posRoja;

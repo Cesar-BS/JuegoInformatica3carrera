@@ -29,6 +29,8 @@ Tablero::~Tablero() {
     for (int i = 0; i < TAM; ++i)
         for (int j = 0; j < TAM; ++j)
             if (matriz[i][j].pieza) { delete matriz[i][j].pieza; matriz[i][j].pieza = nullptr; }
+    for (auto p : piezasEliminadasAzul) delete p;
+    for (auto p : piezasEliminadasRojo) delete p;
 }
 
 // =========================================================
@@ -334,12 +336,20 @@ void Tablero::resolverCombate(Pieza* perdedor) {
     // El ganador ocupa la casilla del perdedor
     bool perdedorEsDefensor = (px == defensorX && py == defensorY);
     if (perdedorEsDefensor && atacanteX != -1) {
-        delete matriz[defensorX][defensorY].pieza;
+        Pieza* eliminada = matriz[defensorX][defensorY].pieza;
+        if (eliminada->getEquipo() == Equipo::Azul)
+            piezasEliminadasAzul.push_back(eliminada);
+        else
+            piezasEliminadasRojo.push_back(eliminada);
         matriz[defensorX][defensorY].pieza = matriz[atacanteX][atacanteY].pieza;
         matriz[atacanteX][atacanteY].pieza = nullptr;
     }
     else {
-        delete matriz[px][py].pieza;
+        Pieza* eliminada = matriz[px][py].pieza;
+        if (eliminada->getEquipo() == Equipo::Azul)
+            piezasEliminadasAzul.push_back(eliminada);
+        else
+            piezasEliminadasRojo.push_back(eliminada);
         matriz[px][py].pieza = nullptr;
     }
 

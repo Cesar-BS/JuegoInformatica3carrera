@@ -34,6 +34,25 @@ void Coordinador::gestionarEventos(sf::RenderWindow& window, sf::Event& event) {
         if (event.type == sf::Event::MouseButtonPressed &&
             event.mouseButton.button == sf::Mouse::Left)
             procesarClickTablero(event.mouseButton.x, event.mouseButton.y);
+        if (event.type == sf::Event::KeyPressed) {
+            if (event.key.code == sf::Keyboard::H && selFila != -1) {
+                tablero.ejecutarHechizo(static_cast<int>(IdHechizo::Curar), selFila, selCol);
+                selFila = selCol = -1;
+            }
+            if (event.key.code == sf::Keyboard::E && selFila != -1) {
+                tablero.ejecutarHechizo(static_cast<int>(IdHechizo::Encarcelar), selFila, selCol);
+                selFila = selCol = -1;
+            }
+            if (event.key.code == sf::Keyboard::R) {
+                tablero.ejecutarHechizo(static_cast<int>(IdHechizo::Revivir), 0, 0);
+            }
+            if (event.key.code == sf::Keyboard::T && selFila != -1) {
+                modoTeleport = true;
+                teleportOrigenFila = selFila;
+                teleportOrigenCol = selCol;
+                selFila = selCol = -1;
+            }
+        }
         if (event.type == sf::Event::KeyPressed &&
             event.key.code == sf::Keyboard::Escape)
             estado = EstadoJuego::MENU;
@@ -61,8 +80,21 @@ void Coordinador::procesarClickTablero(int px, int py) {
 
     if (col < 0 || col >= Tablero::TAM || fil < 0 || fil >= Tablero::TAM) {
         selFila = selCol = -1;
+        modoTeleport = false;
         return;
     }
+
+    if (modoTeleport) {
+        tablero.ejecutarHechizo(
+            static_cast<int>(IdHechizo::Teleportar),
+            teleportOrigenFila, teleportOrigenCol,
+            fil, col
+        );
+        modoTeleport = false;
+        teleportOrigenFila = teleportOrigenCol = -1;
+        return;
+    }
+
 
     if (selFila == -1) {
         selFila = fil;
