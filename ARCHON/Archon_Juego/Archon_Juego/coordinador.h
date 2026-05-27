@@ -34,7 +34,7 @@ private:
     float        velAzul = 200.f, velRoja = 200.f;
     float        recargaAzul = 0.f, recargaRoja = 0.f;
     int          vidaAzulCombate = 0, vidaRojaCombate = 0;
-
+public:
     struct Proyectil {
         sf::CircleShape forma;
         sf::Vector2f    vel;
@@ -46,7 +46,7 @@ private:
         float           radioExplosion = 0.f;
     };
     std::vector<Proyectil> proyectiles;
-
+    private:
     struct Obstaculo {
         sf::Sprite sprite;
         sf::FloatRect hitbox;
@@ -71,6 +71,8 @@ private:
     void dibujarCombate(sf::RenderWindow& window);
     void dispararAzul();
     void dispararRoja();
+    bool ganoAzul = false;
+    void reiniciar();
 
 public:
     Coordinador();
