@@ -45,6 +45,14 @@ void Coordinador::gestionarEventos(sf::RenderWindow& window, sf::Event& event) {
             event.key.code == sf::Keyboard::Escape)
             estado = EstadoJuego::TABLERO;
     }
+    if (estado == EstadoJuego::FIN_PARTIDA) {
+        if (event.type == sf::Event::KeyPressed) {
+            if (event.key.code == sf::Keyboard::Escape)
+                estado = EstadoJuego::MENU;
+            if (event.key.code == sf::Keyboard::R)
+                reiniciar();
+        }
+    }
 }
 
 void Coordinador::procesarClickTablero(int px, int py) {
@@ -121,10 +129,12 @@ void Coordinador::actualizar(sf::RenderWindow& window) {
         ResultadoVictoria res = tablero.comprobarVictoria();
         if (res == ResultadoVictoria::GanaAzul) {
             ganadorTexto = "GANA EL EQUIPO AZUL";
+            ganoAzul = true;
             estado = EstadoJuego::FIN_PARTIDA;
         }
         else if (res == ResultadoVictoria::GanaRojo) {
             ganadorTexto = "GANA EL EQUIPO ROJO";
+            ganoAzul = false;
             estado = EstadoJuego::FIN_PARTIDA;
         }
         return;
@@ -178,8 +188,7 @@ void Coordinador::actualizarCombate(float dt) {
 
     // quitar esto: recargaAzul -= dt; recargaRoja -= dt;
 
-    float intA = std::max(0.2f, 1.5f - piezaAzulCombate->getVelocidadAtaque() * 0.13f);
-    float intR = std::max(0.2f, 1.5f - piezaRojaCombate->getVelocidadAtaque() * 0.13f);
+    
 
 
     // ── Daño cuerpo a cuerpo (sin proyectil) ────────────────────────────────
@@ -398,12 +407,22 @@ void Coordinador::dibujar(sf::RenderWindow& window) {
 
     if (estado == EstadoJuego::ARENA_COMBATE) { dibujarCombate(window); return; }
 
-    if (estado == EstadoJuego::FIN_PARTIDA && fuenteCargada) {
-        sf::Text t(ganadorTexto, fuente, 60);
-        t.setFillColor(sf::Color::White);
-        sf::FloatRect bounds = t.getLocalBounds();
-        t.setPosition((1280.f - bounds.width) / 2.f, 300.f);
-        window.draw(t);
+    if (estado == EstadoJuego::FIN_PARTIDA) {
+        static sf::Texture texVictAzul, texVictRojo;
+        static sf::Sprite sprVict;
+        static bool victCargada = false;
+        if (!victCargada) {
+            texVictAzul.loadFromFile("assets/victoria_azul.png");
+            texVictRojo.loadFromFile("assets/victoria_rojo.png");
+            victCargada = true;
+        }
+        sprVict.setTexture(ganoAzul ? texVictAzul : texVictRojo);
+        sprVict.setScale(
+            1280.f / sprVict.getTexture()->getSize().x,
+            720.f / sprVict.getTexture()->getSize().y
+        );
+        window.draw(sprVict);
+        return;
     }
 }
 
@@ -530,5 +549,15 @@ void Coordinador::dibujarCombate(sf::RenderWindow& window) {
         ctrl.setFillColor(sf::Color(200, 200, 200)); ctrl.setPosition(330.f, 695.f); window.draw(ctrl);
     }
 }
+void Coordinador::reiniciar() {
+    tablero.inicializa();
+    piezaAzulCombate = piezaRojaCombate = nullptr;
+    proyectiles.clear();
+    obstaculos.clear();
+    selFila = selCol = -1;
+    vidaAzulCombate = vidaRojaCombate = 0;
+    estado = EstadoJuego::TABLERO;
+}
+
 
 bool Coordinador::salir() { return estado == EstadoJuego::SALIR; }
