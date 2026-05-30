@@ -16,9 +16,9 @@ static constexpr float OFFSET_Y = 50.f;
 // Referencia a la ventana SFML (definida en Main.cpp)
 extern sf::RenderWindow* gVentana;
 
-// =========================================================
+
 // CONSTRUCTOR / DESTRUCTOR
-// =========================================================
+
 Tablero::Tablero() {
     turnoActual = Equipo::Azul;
     contadorTurnos = 0;
@@ -33,9 +33,9 @@ Tablero::~Tablero() {
     for (auto p : piezasEliminadasRojo) delete p;
 }
 
-// =========================================================
+
 // INICIALIZA - coloca todas las piezas
-// =========================================================
+
 void Tablero::inicializa() {
     for (int i = 0; i < TAM; ++i)
         for (int j = 0; j < TAM; ++j) {
@@ -94,9 +94,7 @@ void Tablero::inicializa() {
     matriz[8][7].pieza = new Reina_arquera(Equipo::Rojo);
 }
 
-// =========================================================
-// DIBUJA
-// =========================================================
+
 void Tablero::dibuja() const {
     if (!gVentana) return;
     // Fondo del tablero
@@ -202,9 +200,9 @@ void Tablero::dibuja() const {
     window.draw(ind);
 }
 
-// =========================================================
+
 // LÓGICA
-// =========================================================
+
 bool Tablero::esMovimientoLegal(Pieza* p, int xO, int yO, int xD, int yD) const {
     Pieza* dest = matriz[xD][yD].pieza;
     if (dest && dest->getEquipo() == p->getEquipo()) return false;
@@ -407,7 +405,7 @@ bool Tablero::ejecutarHechizo(int idHechizo, int x, int y, int x2, int y2) {
 
     switch (id) {
 
-        // ── CURAR: cura completamente a una pieza aliada en (x,y) ─────────────
+        // ── CURAR: cura completamente a una pieza aliada en (x,y) 
     case IdHechizo::Curar:
         if (buscarPieza(equipoActual, x, y)) {
             matriz[x][y].pieza->curarTotal();
@@ -415,7 +413,7 @@ bool Tablero::ejecutarHechizo(int idHechizo, int x, int y, int x2, int y2) {
         }
         break;
 
-        // ── TELEPORTAR: mueve pieza aliada de (x,y) a (x2,y2) ────────────────
+        // ── TELEPORTAR: mueve pieza aliada de (x,y) a (x2,y2) 
     case IdHechizo::Teleportar:
         if (buscarPieza(equipoActual, x, y) && casillaLibre(x2, y2)) {
             matriz[x2][y2].pieza = matriz[x][y].pieza;
@@ -424,7 +422,7 @@ bool Tablero::ejecutarHechizo(int idHechizo, int x, int y, int x2, int y2) {
         }
         break;
 
-        // ── ENCARCELAR: inmoviliza una pieza rival en (x,y) ──────────────────
+        // ── ENCARCELAR: inmoviliza una pieza rival en (x,y)
     case IdHechizo::Encarcelar:
         if (buscarPieza(equipoRival, x, y) &&
             !matriz[x][y].esPuntoPoder)  // los puntos de poder son inmunes
@@ -434,7 +432,7 @@ bool Tablero::ejecutarHechizo(int idHechizo, int x, int y, int x2, int y2) {
         }
         break;
 
-        // ── REVIVIR: resucita la última pieza eliminada junto al lanzador ─────
+        // ── REVIVIR: resucita la última pieza eliminada junto al lanzador
     case IdHechizo::Revivir: {
         std::vector<Pieza*>& eliminadas =
             (equipoActual == Equipo::Azul) ? piezasEliminadasAzul : piezasEliminadasRojo;
