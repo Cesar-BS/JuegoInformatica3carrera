@@ -546,37 +546,38 @@ void Coordinador::dibujarCombate(sf::RenderWindow& window) {
         sprBarraRoja.setTexture(texBarraRoja);
         barrasCargadas = true;
     }
-
-    // Barra de vida azul (izquierda)
     int mA = piezaAzulCombate ? piezaAzulCombate->getVidaMax() : 100;
     float rA = std::max(0.f, (float)vidaAzulCombate / mA);
-    // Marco
-    sprBarraAzul.setScale(400.f / texBarraAzul.getSize().x, 60.f / texBarraAzul.getSize().y);
-    sprBarraAzul.setPosition(10.f, 5.f);
-    // Relleno debajo del marco
-    sf::RectangleShape rellenoA({ 320.f * rA, 22.f });
+    int mR = piezaRojaCombate ? piezaRojaCombate->getVidaMax() : 100;
+    float rR = std::max(0.f, (float)vidaRojaCombate / mR);
+    // Barra azul
+    float altoBarra = 120.f;
+    float anchoBarra = 854.f * (altoBarra / 292.f); // mantiene proporción
+    sprBarraAzul.setScale(anchoBarra / texBarraAzul.getSize().x, altoBarra / texBarraAzul.getSize().y);
+    sprBarraAzul.setPosition(10.f, 3.f);
+    sf::RectangleShape rellenoA({ (anchoBarra - 120.f) * rA, 35.f });
     rellenoA.setFillColor(sf::Color(70, 130, 255));
-    rellenoA.setPosition(75.f, 24.f);
+    rellenoA.setPosition(110.f, 41.f);
     window.draw(rellenoA);
     window.draw(sprBarraAzul);
 
-    // Barra de vida roja (derecha)
-    int mR = piezaRojaCombate ? piezaRojaCombate->getVidaMax() : 100;
-    float rR = std::max(0.f, (float)vidaRojaCombate / mR);
-    // Marco (invertido para que el escudo quede a la derecha)
-    sprBarraRoja.setScale(-400.f / texBarraRoja.getSize().x, 60.f / texBarraRoja.getSize().y);
-    sprBarraRoja.setPosition(1270.f, 5.f);
-    // Relleno
-    sf::RectangleShape rellenoR({ 320.f * rR, 22.f });
+    // Barra roja
+    float altoBarra2 = 120.f;
+    float anchoBarra2 = 857.f * (altoBarra2 / 291.f);
+    sprBarraRoja.setScale(-anchoBarra2 / texBarraRoja.getSize().x, altoBarra2 / texBarraRoja.getSize().y);
+    sprBarraRoja.setPosition(1250.f, 3.f);
+    float xBarraRoja = 1270.f - anchoBarra2 + 110.f;
+    sf::RectangleShape rellenoR({ (anchoBarra2 - 80.f) * rR, 31.f });
     rellenoR.setFillColor(sf::Color(255, 60, 60));
-    rellenoR.setPosition(880.f + 320.f * (1.f - rR), 24.f);
+   
+    rellenoR.setPosition(xBarraRoja + (anchoBarra2 - 150.f) * (1.f - rR)-100.f, 42.f);
     window.draw(rellenoR);
     window.draw(sprBarraRoja);
     if (fuenteCargada) {
         sf::Text tA(piezaAzulCombate ? piezaAzulCombate->getNombre() : "Azul", fuente, 16);
-        tA.setFillColor(sf::Color(150, 200, 255)); tA.setPosition(20.f, 46.f); window.draw(tA);
+        tA.setFillColor(sf::Color(150, 200, 255)); tA.setPosition(100.f, 100.f); window.draw(tA);
         sf::Text tR(piezaRojaCombate ? piezaRojaCombate->getNombre() : "Rojo", fuente, 16);
-        tR.setFillColor(sf::Color(255, 150, 150)); tR.setPosition(960.f, 46.f); window.draw(tR);
+        tR.setFillColor(sf::Color(255, 150, 150)); tR.setPosition(1350.f - anchoBarra2 + 20.f, 100.f); window.draw(tR);
         sf::Text ctrl("Azul: WASD+SPACE  |  Rojo: Flechas+ENTER  |  ESC: volver", fuente, 14);
         ctrl.setFillColor(sf::Color(200, 200, 200)); ctrl.setPosition(330.f, 695.f); window.draw(ctrl);
     }
