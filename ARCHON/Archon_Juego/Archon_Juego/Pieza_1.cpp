@@ -1,9 +1,9 @@
 #include "Pieza.h"
 #include <algorithm>
 
-// =========================================================
+
 // CONSTRUCTOR Y MÉTODOS DE LA CLASE BASE PIEZA
-// =========================================================
+
 
 Pieza::Pieza(Equipo equipo, const std::string& nombre, TipoMovimiento tipoMov, TipoArma tipoArma,
     int vidaMax, int velocidad, int fuerzaAtaque, int velocidadAtaque, int alcanceAtaque, int rangoTablero)
@@ -29,9 +29,9 @@ void Pieza::curar(int cantidad) {
     vida_ = std::min(vidaMax_, vida_ + cantidad);
 }
 
-// =========================================================
+
 // PIEZAS DE TIERRA
-// =========================================================
+
 
 Caballero::Caballero(Equipo equipo)
     : PiezaTierra(equipo, "Caballero", TipoMovimiento::Tierra, TipoArma::CuerpoACuerpo, 60, 130, 15, 400, 1, 3)
@@ -73,9 +73,9 @@ Reina_arquera::Reina_arquera(Equipo equipo)
 {
 }
 
-// =========================================================
+
 // PIEZAS VOLADORAS
-// =========================================================
+
 
 Valkiria::Valkiria(Equipo equipo)
     : PiezaVuelo(equipo, "Valkiria", TipoMovimiento::Vuelo, TipoArma::CuerpoACuerpo, 90, 140, 22, 500, 2, 4)
@@ -133,9 +133,9 @@ Dragon_electrico::Dragon_electrico(Equipo equipo)
 {
 }
 
-// =========================================================
+
 // LANZADORES DE HECHIZOS
-// =========================================================
+
 
 LanzadorHechizos::LanzadorHechizos(Equipo equipo, const std::string& nombre)
     : PiezaTeleport(equipo, nombre, TipoMovimiento::Teletransporte, TipoArma::Magia, 80, 110, 20, 750, 5, 99)
@@ -154,9 +154,9 @@ Mago::Mago(Equipo equipo) : LanzadorHechizos(equipo, "Mago") {}
 
 Bruja::Bruja(Equipo equipo) : LanzadorHechizos(equipo, "Bruja") {}
 
-// =========================================================
+
 // CHANGELING
-// =========================================================
+
 
 Changeling::Changeling(Equipo equipo)
     : PiezaVuelo(equipo, "Changeling", TipoMovimiento::Vuelo, TipoArma::Magia, 100, 120, 25, 600, 4, 4)

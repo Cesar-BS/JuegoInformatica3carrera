@@ -119,8 +119,8 @@ void Coordinador::iniciarCombate() {
     posRoja = sf::Vector2f(1080.f, 360.f);
     vidaAzulCombate = piezaAzulCombate ? piezaAzulCombate->getVida() : 100;
     vidaRojaCombate = piezaRojaCombate ? piezaRojaCombate->getVida() : 100;
-    velAzul = 150.f + (piezaAzulCombate ? piezaAzulCombate->getVelocidad() * 20.f : 0.f);
-    velRoja = 150.f + (piezaRojaCombate ? piezaRojaCombate->getVelocidad() * 20.f : 0.f);
+    velAzul = 5.f + (piezaAzulCombate ? piezaAzulCombate->getVelocidad() * 20.f : 0.f);
+    velRoja = 5.f + (piezaRojaCombate ? piezaRojaCombate->getVelocidad() * 20.f : 0.f);
     recargaAzul = recargaRoja = 0.f;
     proyectiles.clear();
     relojCombate.restart();
