@@ -119,8 +119,8 @@ void Coordinador::iniciarCombate() {
     posRoja = sf::Vector2f(1080.f, 360.f);
     vidaAzulCombate = piezaAzulCombate ? piezaAzulCombate->getVida() : 100;
     vidaRojaCombate = piezaRojaCombate ? piezaRojaCombate->getVida() : 100;
-    velAzul = 5.f + (piezaAzulCombate ? piezaAzulCombate->getVelocidad() * 20.f : 0.f);
-    velRoja = 5.f + (piezaRojaCombate ? piezaRojaCombate->getVelocidad() * 20.f : 0.f);
+    velAzul = 5.f + (piezaAzulCombate ? piezaAzulCombate->getVelocidad() * 1.5f : 0.f);
+    velRoja = 5.f + (piezaRojaCombate ? piezaRojaCombate->getVelocidad() * 1.5f : 0.f);
     recargaAzul = recargaRoja = 0.f;
     proyectiles.clear();
     relojCombate.restart();
@@ -203,108 +203,73 @@ void Coordinador::actualizarCombate(float dt) {
         };
     clamp(posAzul); clamp(posRoja);
 
-    //COLISIONES DE LOS JUGADORES CON LOS OBSTÁCULOS
+    // COLISIONES DE LOS JUGADORES CON LOS OBSTÁCULOS
     sf::FloatRect hitboxAzul(posAzul.x - 24, posAzul.y - 24, 48, 48);
     for (const auto& obs : obstaculos) {
-        if (hitboxAzul.intersects(obs.hitbox)) {
-            posAzul = posAzulAnt; // Si choca, anulamos el movimiento
-        }
+        if (hitboxAzul.intersects(obs.hitbox)) posAzul = posAzulAnt;
     }
 
     sf::FloatRect hitboxRoja(posRoja.x - 24, posRoja.y - 24, 48, 48);
     for (const auto& obs : obstaculos) {
-        if (hitboxRoja.intersects(obs.hitbox)) {
-            posRoja = posRojaAnt; // Si choca, anulamos el movimiento
-        }
+        if (hitboxRoja.intersects(obs.hitbox)) posRoja = posRojaAnt;
     }
 
+    // COLISIONES ENTRE JUGADORES (Física sólida)
     float dxJugadores = posRoja.x - posAzul.x;
     float dyJugadores = posRoja.y - posAzul.y;
-    // Calculamos la distancia real entre el centro del jugador azul y el rojo
     float distJugadores = std::sqrt(dxJugadores * dxJugadores + dyJugadores * dyJugadores);
 
-    // Cada personaje tiene un "radio" de 24. Si la distancia es menor a 48 (24+24), se están solapando.
     if (distJugadores < 48.f) {
-        // Al chocar físicamente, anulamos el movimiento devolviéndolos a su posición del fotograma anterior
         posAzul = posAzulAnt;
         posRoja = posRojaAnt;
     }
 
-    // (AQUÍ SIGUE TU CÓDIGO ACTUAL)
     recargaAzul -= dt; recargaRoja -= dt;
 
-    
-
-
-    // ── Daño cuerpo a cuerpo (sin proyectil) 
+    // HELPER MATEMÁTICO (Descomentado porque las explosiones lo necesitan)
     auto distancia = [](sf::Vector2f a, sf::Vector2f b) {
         float dx = a.x - b.x, dy = a.y - b.y;
         return std::sqrt(dx * dx + dy * dy);
-    };
+        };
 
-    const float RANGO_CAC = 55.f;  // píxeles para que golpee
-
-    if (piezaAzulCombate->getArma() == TipoArma::CuerpoACuerpo) {
-        recargaAzul -= dt;
-        if (distancia(posAzul, posRoja) < RANGO_CAC && recargaAzul <= 0.f) {
-            vidaRojaCombate = std::max(0, vidaRojaCombate - piezaAzulCombate->getFuerzaAtaque());
-            float intA = std::max(0.2f, 1.5f - piezaAzulCombate->getVelocidadAtaque() * 0.13f);
-            recargaAzul = intA;
-        }
-    }
-
-    if (piezaRojaCombate->getArma() == TipoArma::CuerpoACuerpo) {
-        recargaRoja -= dt;
-        if (distancia(posAzul, posRoja) < RANGO_CAC && recargaRoja <= 0.f) {
-            vidaAzulCombate = std::max(0, vidaAzulCombate - piezaRojaCombate->getFuerzaAtaque());
-            float intR = std::max(0.2f, 1.5f - piezaRojaCombate->getVelocidadAtaque() * 0.13f);
-            recargaRoja = intR;
-        }
-    }
-
-    // Disparo con tecla solo para piezas que NO son CuerpoACuerpo
     float intA = std::max(0.2f, 1.5f - piezaAzulCombate->getVelocidadAtaque() * 0.13f);
     float intR = std::max(0.2f, 1.5f - piezaRojaCombate->getVelocidadAtaque() * 0.13f);
 
-    if (piezaAzulCombate->getArma() != TipoArma::CuerpoACuerpo) {
-        recargaAzul -= dt;
+    // ── ATAQUES EQUIPO AZUL ──
+    if (piezaAzulCombate->getArma() == TipoArma::CuerpoACuerpo) {
+        // Solo ataca con la F si es cuerpo a cuerpo
+        if (sf::Keyboard::isKeyPressed(sf::Keyboard::F) && recargaAzul <= 0.f) {
+            if (distancia(posAzul, posRoja) < 80.f) {
+                vidaRojaCombate = std::max(0, vidaRojaCombate - piezaAzulCombate->getFuerzaAtaque());
+            }
+            recargaAzul = intA;
+        }
+    }
+    else {
+        // Dispara con Espacio si tiene arma a distancia
         if (sf::Keyboard::isKeyPressed(sf::Keyboard::Space) && recargaAzul <= 0.f) {
             dispararAzul(); recargaAzul = intA;
         }
     }
-    if (piezaRojaCombate->getArma() != TipoArma::CuerpoACuerpo) {
-        recargaRoja -= dt;
+
+    // ── ATAQUES EQUIPO ROJO ──
+    if (piezaRojaCombate->getArma() == TipoArma::CuerpoACuerpo) {
+        // Solo ataca con Shift Derecho si es cuerpo a cuerpo
+        if (sf::Keyboard::isKeyPressed(sf::Keyboard::RShift) && recargaRoja <= 0.f) {
+            if (distancia(posAzul, posRoja) < 80.f) {
+                vidaAzulCombate = std::max(0, vidaAzulCombate - piezaRojaCombate->getFuerzaAtaque());
+            }
+            recargaRoja = intR;
+        }
+    }
+    else {
+        // Dispara con Enter si tiene arma a distancia
         if (sf::Keyboard::isKeyPressed(sf::Keyboard::Return) && recargaRoja <= 0.f) {
             dispararRoja(); recargaRoja = intR;
         }
     }
-    // Tecla F para el ataque melee del Azul
-    if (sf::Keyboard::isKeyPressed(sf::Keyboard::F) && recargaAzul <= 0.f) {
-        // Calculamos la distancia geométrica entre ambos personajes
-        float dx = posRoja.x - posAzul.x;
-        float dy = posRoja.y - posAzul.y;
-        float distancia = std::sqrt(dx * dx + dy * dy);
 
-        // Si están a menos de 80 píxeles, el golpe acierta
-        if (distancia < 80.f) {
-            vidaRojaCombate = std::max(0, vidaRojaCombate - piezaAzulCombate->getFuerzaAtaque());
-        }
-        // Reseteamos la recarga para que no pueda spamear el ataque
-        recargaAzul = intA;
-    }
-
-    // Tecla Right Shift (Shift Derecho) para el ataque melee del Rojo
-    if (sf::Keyboard::isKeyPressed(sf::Keyboard::RShift) && recargaRoja <= 0.f) {
-        float dx = posAzul.x - posRoja.x;
-        float dy = posAzul.y - posRoja.y;
-        float distancia = std::sqrt(dx * dx + dy * dy);
-
-        if (distancia < 80.f) {
-            vidaAzulCombate = std::max(0, vidaAzulCombate - piezaRojaCombate->getFuerzaAtaque());
-        }
-        recargaRoja = intR;
-    }
-    // ── Mover proyectiles y aplicar daño 
+    // ── Mover proyectiles y aplicar daño ──
     for (auto& p : proyectiles) {
         if (!p.activo) continue;
         p.forma.move(p.vel);
@@ -331,7 +296,6 @@ void Coordinador::actualizarCombate(float dt) {
             sf::FloatRect hitR(posRoja.x - 24, posRoja.y - 24, 48, 48);
             if (pb.intersects(hitR)) {
                 if (p.esExplosion) {
-                    // Explosión: daño reducido también al atacante si está cerca
                     vidaRojaCombate = std::max(0, vidaRojaCombate - p.danio);
                     if (distancia(posAzul, posRoja) < p.radioExplosion)
                         vidaAzulCombate = std::max(0, vidaAzulCombate - p.danio / 3);
@@ -360,8 +324,6 @@ void Coordinador::actualizarCombate(float dt) {
 
     proyectiles.erase(std::remove_if(proyectiles.begin(), proyectiles.end(),
         [](const Proyectil& p) { return !p.activo; }), proyectiles.end());
-    proyectiles.erase(std::remove_if(proyectiles.begin(), proyectiles.end(),
-        [](const Proyectil& p) { return !p.activo; }), proyectiles.end());
 
     if (vidaAzulCombate <= 0 || vidaRojaCombate <= 0) {
         sonidoMuerte.play();
@@ -379,7 +341,6 @@ void Coordinador::actualizarCombate(float dt) {
         estado = EstadoJuego::TABLERO;
     }
 }
-
 // ── Helper interno para crear un proyectil base
 static Coordinador::Proyectil crearProyectil(
     sf::Vector2f origen, sf::Vector2f destino,
@@ -619,7 +580,7 @@ void Coordinador::dibujarCombate(sf::RenderWindow& window) {
         sf::Text ctrl("Azul: WASD+SPACE  |  Rojo: Flechas+ENTER  |  ESC: volver", fuente, 14);
         ctrl.setFillColor(sf::Color(200, 200, 200)); ctrl.setPosition(330.f, 695.f); window.draw(ctrl);
     }
-}
+}   
 void Coordinador::reiniciar() {
     tablero.inicializa();
     piezaAzulCombate = piezaRojaCombate = nullptr;
