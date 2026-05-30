@@ -218,7 +218,20 @@ void Coordinador::actualizarCombate(float dt) {
         }
     }
 
-    // quitar esto: recargaAzul -= dt; recargaRoja -= dt;
+    float dxJugadores = posRoja.x - posAzul.x;
+    float dyJugadores = posRoja.y - posAzul.y;
+    // Calculamos la distancia real entre el centro del jugador azul y el rojo
+    float distJugadores = std::sqrt(dxJugadores * dxJugadores + dyJugadores * dyJugadores);
+
+    // Cada personaje tiene un "radio" de 24. Si la distancia es menor a 48 (24+24), se están solapando.
+    if (distJugadores < 48.f) {
+        // Al chocar físicamente, anulamos el movimiento devolviéndolos a su posición del fotograma anterior
+        posAzul = posAzulAnt;
+        posRoja = posRojaAnt;
+    }
+
+    // (AQUÍ SIGUE TU CÓDIGO ACTUAL)
+    recargaAzul -= dt; recargaRoja -= dt;
 
     
 
@@ -265,7 +278,32 @@ void Coordinador::actualizarCombate(float dt) {
             dispararRoja(); recargaRoja = intR;
         }
     }
+    // Tecla F para el ataque melee del Azul
+    if (sf::Keyboard::isKeyPressed(sf::Keyboard::F) && recargaAzul <= 0.f) {
+        // Calculamos la distancia geométrica entre ambos personajes
+        float dx = posRoja.x - posAzul.x;
+        float dy = posRoja.y - posAzul.y;
+        float distancia = std::sqrt(dx * dx + dy * dy);
 
+        // Si están a menos de 80 píxeles, el golpe acierta
+        if (distancia < 80.f) {
+            vidaRojaCombate = std::max(0, vidaRojaCombate - piezaAzulCombate->getFuerzaAtaque());
+        }
+        // Reseteamos la recarga para que no pueda spamear el ataque
+        recargaAzul = intA;
+    }
+
+    // Tecla Right Shift (Shift Derecho) para el ataque melee del Rojo
+    if (sf::Keyboard::isKeyPressed(sf::Keyboard::RShift) && recargaRoja <= 0.f) {
+        float dx = posAzul.x - posRoja.x;
+        float dy = posAzul.y - posRoja.y;
+        float distancia = std::sqrt(dx * dx + dy * dy);
+
+        if (distancia < 80.f) {
+            vidaAzulCombate = std::max(0, vidaAzulCombate - piezaRojaCombate->getFuerzaAtaque());
+        }
+        recargaRoja = intR;
+    }
     // ── Mover proyectiles y aplicar daño 
     for (auto& p : proyectiles) {
         if (!p.activo) continue;
