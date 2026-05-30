@@ -223,7 +223,7 @@ void Coordinador::actualizarCombate(float dt) {
     
 
 
-    // ── Daño cuerpo a cuerpo (sin proyectil) ────────────────────────────────
+    // ── Daño cuerpo a cuerpo (sin proyectil) 
     auto distancia = [](sf::Vector2f a, sf::Vector2f b) {
         float dx = a.x - b.x, dy = a.y - b.y;
         return std::sqrt(dx * dx + dy * dy);
@@ -266,7 +266,7 @@ void Coordinador::actualizarCombate(float dt) {
         }
     }
 
-    // ── Mover proyectiles y aplicar daño ────────────────────────────────────
+    // ── Mover proyectiles y aplicar daño 
     for (auto& p : proyectiles) {
         if (!p.activo) continue;
         p.forma.move(p.vel);
@@ -342,7 +342,7 @@ void Coordinador::actualizarCombate(float dt) {
     }
 }
 
-// ── Helper interno para crear un proyectil base ─────────────────────────
+// ── Helper interno para crear un proyectil base
 static Coordinador::Proyectil crearProyectil(
     sf::Vector2f origen, sf::Vector2f destino,
     int fuerzaAtaque, int alcance, bool esAzul,
